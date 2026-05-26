@@ -1,0 +1,16 @@
+build/
+out/
+cmake-build-*/
+.qt/
+*.user
+*.bak
+*.tmp
+*.log
+*.pdb
+*.ilk
+*.obj
+*.exe
+*.dll
+*.manifest
+chevel_run_stdout.txt
+chevel_run_stderr.txt
