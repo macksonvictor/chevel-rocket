@@ -2,7 +2,6 @@
   <img src="./docs/assets/branding/chevel-rocket-logo.png" alt="Chevel Rocket" width="520" />
 </p>
 
-<h1 align="center">Chevel Rocket</h1>
 
 <p align="center">
   <strong>Native robotics control center for the Chevel ecosystem.</strong>
