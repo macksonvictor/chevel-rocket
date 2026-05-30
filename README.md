@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="./docs/chevel-rocket-logo.svg" alt="Chevel Rocket" width="360" />
-</p>
-
 <h1 align="center">Chevel Rocket</h1>
 
 <p align="center">
@@ -18,7 +14,6 @@
 
 <p align="center">
   <a href="#overview">Overview</a> |
-  <a href="#product-gallery">Gallery</a> |
   <a href="#ecosystem">Ecosystem</a> |
   <a href="#features">Features</a> |
   <a href="#wiesel-mini">WIESEL Mini</a> |
@@ -41,29 +36,11 @@ The first physical target is **WIESEL Mini**, a small low-cost prototype used to
 
 ---
 
-## Product Gallery
-
-### Chevel Rocket Identity
-
-<p align="center">
-  <img src="./docs/chevel-rocket-logo.svg" alt="Chevel Rocket logo" width="760" />
-</p>
-
-### Cockpit Preview
-
-<p align="center">
-  <img src="./docs/assets/screenshots/cockpit.svg" alt="Chevel Rocket cockpit preview" width="860" />
-</p>
-
-### Ecosystem Map
+## Ecosystem
 
 <p align="center">
   <img src="./docs/assets/diagrams/ecosystem.svg" alt="Chevel Rocket ecosystem architecture" width="860" />
 </p>
-
----
-
-## Ecosystem
 
 ```text
 Chevel AI
@@ -162,7 +139,6 @@ chevel-rocket/
 |   |-- CHEVEL_AI_INTEGRATION.md
 |   |-- HARDWARE_PROTOCOL.md
 |   |-- WIESEL_MINI.md
-|   |-- chevel-rocket-logo.svg
 |   `-- assets/
 |-- hardware/
 |   `-- wiesel-mini/
@@ -253,7 +229,7 @@ Test minimal Qt/QML window:
 ### Native app
 
 - Stabilize the Qt/QML cockpit.
-- Improve the visual identity for Chevel Rocket.
+- Add official Chevel Rocket images supplied by the project.
 - Separate simulation and hardware modes clearly.
 - Add better diagnostics for QML startup and runtime state.
 
@@ -276,10 +252,6 @@ Test minimal Qt/QML window:
 ## Maintainer
 
 Developed by **Mackson Victor** as part of the Chevel ecosystem.
-
-<p align="center">
-  <img src="./docs/chevel-rocket-logo.svg" alt="Chevel Rocket" width="160" />
-</p>
 
 <p align="center">
   <strong>Chevel Rocket</strong><br />
