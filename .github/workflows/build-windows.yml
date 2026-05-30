@@ -18,6 +18,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Ninja
+        shell: pwsh
+        run: |
+          choco install ninja -y
+          ninja --version
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -25,7 +31,7 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2022_64'
-          modules: 'qtdeclarative qtquickcontrols2'
+          cache: true
 
       - name: Configure
         shell: pwsh
