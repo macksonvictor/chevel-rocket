@@ -36,8 +36,7 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2022_64'
-          modules: 'qtdeclarative qtshadertools'
-          cache: true
+          cache: false
 
       - name: Show tool versions
         shell: pwsh
@@ -45,6 +44,8 @@ jobs:
           cmake --version
           ninja --version
           cl
+          qmake -query QT_VERSION
+          qmake -query QT_INSTALL_PREFIX
 
       - name: Configure
         shell: pwsh
