@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-label="Chevel Rocket cockpit preview">
+  <defs><linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#05070a"/><stop offset="1" stop-color="#111820"/></linearGradient><linearGradient id="g" x1="0" x2="1"><stop stop-color="#31ff8d"/><stop offset="1" stop-color="#65d8ff"/></linearGradient></defs>
+  <rect width="1200" height="720" rx="28" fill="url(#bg)"/>
+  <rect x="35" y="35" width="1130" height="80" rx="14" fill="#111820" stroke="#263741"/>
+  <text x="70" y="85" fill="#f3fff8" font-family="Segoe UI, Arial" font-size="34" font-weight="800">CHEVEL ROCKET</text>
+  <rect x="390" y="56" width="180" height="38" rx="8" fill="#07100c" stroke="#31ff8d"/><text x="420" y="82" fill="#31ff8d" font-family="Segoe UI, Arial" font-size="16" font-weight="700">SIMULATION MODE</text>
+  <rect x="840" y="52" width="140" height="46" rx="8" fill="#070b0e" stroke="#263741"/><text x="878" y="82" fill="#f3fff8" font-family="Consolas" font-size="24">11:07</text>
+  <rect x="35" y="140" width="260" height="410" rx="14" fill="#0b1116" stroke="#263741"/>
+  <text x="60" y="178" fill="#65d8ff" font-family="Segoe UI, Arial" font-size="22" font-weight="700">Robot Health</text>
+  <g fill="#111820" stroke="#263741"><rect x="60" y="205" width="210" height="62" rx="10"/><rect x="60" y="285" width="210" height="62" rx="10"/><rect x="60" y="365" width="210" height="62" rx="10"/><rect x="60" y="445" width="210" height="62" rx="10"/></g>
+  <g font-family="Segoe UI, Arial" font-size="15" fill="#8fa7b2"><text x="82" y="242">LINK: SIMULATED</text><text x="82" y="322">POWER: SAFE</text><text x="82" y="402">ARM: DISARMED</text><text x="82" y="482">RISK: LOW</text></g>
+  <rect x="320" y="140" width="545" height="410" rx="14" fill="#0b1116" stroke="#263741"/>
+  <text x="350" y="178" fill="#65d8ff" font-family="Segoe UI, Arial" font-size="22" font-weight="700">Telemetry Grid</text>
+  <g fill="#101820" stroke="#263741"><rect x="350" y="210" width="150" height="120" rx="12"/><rect x="518" y="210" width="150" height="120" rx="12"/><rect x="686" y="210" width="150" height="120" rx="12"/><rect x="350" y="355" width="150" height="120" rx="12"/><rect x="518" y="355" width="150" height="120" rx="12"/><rect x="686" y="355" width="150" height="120" rx="12"/></g>
+  <g stroke="url(#g)" stroke-width="7" fill="none"><circle cx="425" cy="270" r="34"/><circle cx="593" cy="270" r="34"/><circle cx="761" cy="270" r="34"/><circle cx="425" cy="415" r="34"/><circle cx="593" cy="415" r="34"/><circle cx="761" cy="415" r="34"/></g>
+  <rect x="890" y="140" width="275" height="410" rx="14" fill="#0b1116" stroke="#263741"/>
+  <text x="920" y="178" fill="#65d8ff" font-family="Segoe UI, Arial" font-size="22" font-weight="700">Commands</text>
+  <g fill="#111820" stroke="#31ff8d"><rect x="920" y="215" width="210" height="44" rx="8"/><rect x="920" y="275" width="210" height="44" rx="8"/><rect x="920" y="335" width="210" height="44" rx="8"/></g>
+  <rect x="920" y="425" width="210" height="58" rx="10" fill="#2a0710" stroke="#ff5168"/>
+  <g font-family="Segoe UI, Arial" font-size="16" fill="#f3fff8" font-weight="700"><text x="984" y="243">ARM</text><text x="972" y="303">HOME</text><text x="977" y="363">STATUS</text><text x="955" y="462">EMERGENCY STOP</text></g>
+  <rect x="35" y="575" width="1130" height="95" rx="14" fill="#070b0e" stroke="#263741"/>
+  <text x="65" y="615" fill="#65d8ff" font-family="Segoe UI, Arial" font-size="20" font-weight="700">Log Console</text>
+  <text x="65" y="646" fill="#8fa7b2" font-family="Consolas" font-size="16">[system] Chevel Rocket cockpit ready · [robot] simulation mode · [safety] emergency control armed</text>
+</svg>
