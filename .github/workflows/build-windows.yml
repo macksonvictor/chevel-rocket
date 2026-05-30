@@ -18,10 +18,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup MSVC developer command prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Install Ninja
         shell: pwsh
         run: |
-          choco install ninja -y
+          choco install ninja -y --no-progress
           ninja --version
 
       - name: Install Qt
@@ -31,7 +36,15 @@ jobs:
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2022_64'
+          modules: 'qtdeclarative qtshadertools'
           cache: true
+
+      - name: Show tool versions
+        shell: pwsh
+        run: |
+          cmake --version
+          ninja --version
+          cl
 
       - name: Configure
         shell: pwsh
