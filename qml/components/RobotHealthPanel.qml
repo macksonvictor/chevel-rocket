@@ -61,13 +61,13 @@ Rectangle {
             color: "#36444e"
         }
 
-        StatusLight { label: "Motors"; valueText: tempStatus(); status: tempStatus(); Layout.fillWidth: true }
-        StatusLight { label: "Sensors"; valueText: controller && controller.emergencyActive ? "OFFLINE" : "OK"; status: valueText; Layout.fillWidth: true }
-        StatusLight { label: "Camera"; valueText: "OFFLINE"; status: "OFFLINE"; Layout.fillWidth: true }
-        StatusLight { label: "Lidar"; valueText: "WARNING"; status: "WARNING"; Layout.fillWidth: true }
-        StatusLight { label: "GPS/Pos"; valueText: controller && controller.connectionState === "SIMULATED" ? "SIMULATED" : "OK"; status: valueText; Layout.fillWidth: true }
-        StatusLight { label: "Control"; valueText: signalStatus(); status: signalStatus(); Layout.fillWidth: true }
-        StatusLight { label: "Power"; valueText: powerStatus(); status: powerStatus(); Layout.fillWidth: true }
+        StatusPill { label: "Motors"; valueText: tempStatus(); status: tempStatus(); Layout.fillWidth: true }
+        StatusPill { label: "Sensors"; valueText: controller && controller.emergencyActive ? "OFFLINE" : "OK"; status: valueText; Layout.fillWidth: true }
+        StatusPill { label: "Camera"; valueText: "OFFLINE"; status: "OFFLINE"; Layout.fillWidth: true }
+        StatusPill { label: "Lidar"; valueText: "WARNING"; status: "WARNING"; Layout.fillWidth: true }
+        StatusPill { label: "GPS/Pos"; valueText: controller && controller.connectionState === "SIMULATED" ? "SIMULATED" : "OK"; status: valueText; Layout.fillWidth: true }
+        StatusPill { label: "Control"; valueText: signalStatus(); status: signalStatus(); Layout.fillWidth: true }
+        StatusPill { label: "Power"; valueText: powerStatus(); status: powerStatus(); Layout.fillWidth: true }
 
         Item { Layout.fillHeight: true }
     }

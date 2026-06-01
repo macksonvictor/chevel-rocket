@@ -34,9 +34,8 @@ Rectangle {
             color: "#36444e"
         }
 
-        IndustrialButton {
+        PrimaryButton {
             text: "ARM ROBOT"
-            variant: "normal"
             locked: root.emergency || root.armed
             Layout.fillWidth: true
             onClicked: root.criticalCommand("ARM ROBOT",
@@ -44,17 +43,27 @@ Rectangle {
                                             "armRobot")
         }
 
-        IndustrialButton {
+        SecondaryButton {
             text: "DISARM ROBOT"
-            variant: "normal"
+            iconText: "\u00d7"
+            visible: root.armed && !root.emergency
             locked: root.emergency || !root.armed
             Layout.fillWidth: true
+            Layout.preferredHeight: visible ? 42 : 0
             onClicked: root.controller.disarmRobot()
         }
 
-        IndustrialButton {
+        DisabledButton {
+            text: "DISARM ROBOT"
+            iconText: "\u00d7"
+            visible: root.emergency || !root.armed
+            Layout.fillWidth: true
+            Layout.preferredHeight: visible ? 42 : 0
+        }
+
+        SecondaryButton {
             text: "START MISSION"
-            variant: "warning"
+            iconText: "\u25b6"
             locked: root.emergency || !root.armed
             Layout.fillWidth: true
             onClicked: root.criticalCommand("START MISSION",
@@ -62,33 +71,31 @@ Rectangle {
                                             "startMission")
         }
 
-        IndustrialButton {
+        SecondaryButton {
             text: "PAUSE MISSION"
-            variant: "normal"
+            iconText: "||"
             locked: root.emergency || !root.armed
             Layout.fillWidth: true
             onClicked: root.controller.pauseMission()
         }
 
-        IndustrialButton {
+        WarningButton {
             text: "RETURN HOME"
-            variant: "warning"
             locked: root.emergency || !root.armed
             Layout.fillWidth: true
             onClicked: root.controller.returnHome()
         }
 
-        IndustrialButton {
+        SecondaryButton {
             text: "CALIBRATE SENSORS"
-            variant: "normal"
+            iconText: "\u25ce"
             locked: root.emergency
             Layout.fillWidth: true
             onClicked: root.controller.calibrateSensors()
         }
 
-        IndustrialButton {
+        WarningButton {
             text: "REBOOT SYSTEM"
-            variant: "warning"
             locked: root.emergency
             Layout.fillWidth: true
             onClicked: root.criticalCommand("REBOOT SYSTEM",
@@ -98,9 +105,8 @@ Rectangle {
 
         Item { Layout.fillHeight: true }
 
-        IndustrialButton {
+        ReadyButton {
             text: "CLEAR EMERGENCY"
-            variant: "warning"
             visible: root.emergency
             locked: !root.emergency
             Layout.fillWidth: true
@@ -108,9 +114,8 @@ Rectangle {
             onClicked: root.controller.clearEmergency()
         }
 
-        IndustrialButton {
+        DangerButton {
             text: "EMERGENCY STOP"
-            variant: "danger"
             locked: root.emergency
             Layout.fillWidth: true
             Layout.preferredHeight: 88

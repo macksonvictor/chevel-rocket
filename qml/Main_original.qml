@@ -18,7 +18,7 @@ ApplicationWindow {
     visibility: Window.Windowed
 
     color: "#07090b"
-    title: "CHEVEL ROCKET"
+    title: "Chevel Rocket"
 
     property string currentTimeText: Qt.formatTime(new Date(), "HH:mm:ss")
     property string pendingMethod: ""
@@ -28,7 +28,7 @@ ApplicationWindow {
         root.visibility = Window.Windowed
         root.raise()
         root.requestActivate()
-        console.log("CHEVEL ROCKET interface loaded")
+        console.log("Chevel Rocket interface loaded")
     }
 
     Timer {
@@ -130,7 +130,7 @@ ApplicationWindow {
                     Layout.preferredWidth: 320
 
                     Text {
-                        text: "CHEVEL"
+                        text: "Chevel Rocket"
                         color: "#eaf9f1"
                         font.pixelSize: 30
                         font.bold: true
@@ -138,7 +138,7 @@ ApplicationWindow {
                     }
 
                     Text {
-                        text: "ROCKET CONTROL CENTER"
+                        text: "Mission & Robot Control"
                         color: "#7df7b1"
                         font.pixelSize: 13
                     }

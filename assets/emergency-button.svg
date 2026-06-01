@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="160" viewBox="0 0 360 160">
+  <defs>
+    <radialGradient id="mushroom" cx="0.5" cy="0.28" r="0.78">
+      <stop offset="0" stop-color="#ff8a8a"/>
+      <stop offset="0.28" stop-color="#e33434"/>
+      <stop offset="0.68" stop-color="#7d1018"/>
+      <stop offset="1" stop-color="#2c0509"/>
+    </radialGradient>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2e353b"/>
+      <stop offset="1" stop-color="#050709"/>
+    </linearGradient>
+  </defs>
+  <rect x="12" y="76" width="336" height="64" rx="10" fill="url(#base)" stroke="#6e7980" stroke-width="2"/>
+  <ellipse cx="180" cy="72" rx="126" ry="50" fill="#250407"/>
+  <ellipse cx="180" cy="58" rx="116" ry="46" fill="url(#mushroom)" stroke="#ff5656" stroke-width="2"/>
+  <ellipse cx="158" cy="38" rx="44" ry="14" fill="#ffffff" opacity="0.16"/>
+  <rect x="44" y="126" width="272" height="5" rx="2.5" fill="#ff3535" opacity="0.75"/>
+</svg>
