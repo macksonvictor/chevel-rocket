@@ -30,19 +30,18 @@ Popup {
     }
 
     background: Rectangle {
-        radius: 5
+        radius: 8
         color: "#0d1216"
-        border.width: 2
-        border.color: root.actionName === "EMERGENCY STOP" ? "#ff3838" : "#f2c84b"
+        border.width: 1
+        border.color: root.actionName === "EMERGENCY STOP" ? "#7F1D1D" : "#2A313B"
 
         Rectangle {
             anchors.fill: parent
-            anchors.margins: 2
-            radius: 3
+            anchors.margins: 1
+            radius: 7
             gradient: Gradient {
-                GradientStop { position: 0.0; color: "#202a31" }
-                GradientStop { position: 0.45; color: "#0d1216" }
-                GradientStop { position: 1.0; color: "#050709" }
+                GradientStop { position: 0.0; color: "#151A21" }
+                GradientStop { position: 1.0; color: "#0E1218" }
             }
         }
     }
@@ -54,7 +53,7 @@ Popup {
 
         Text {
             text: root.actionName
-            color: root.actionName === "EMERGENCY STOP" ? "#ff5555" : "#f2c84b"
+            color: root.actionName === "EMERGENCY STOP" ? "#FCA5A5" : "#E8EAED"
             font.pixelSize: 24
             font.bold: true
             Layout.fillWidth: true
@@ -101,18 +100,29 @@ Popup {
             Layout.fillWidth: true
             spacing: 12
 
-            IndustrialButton {
+            CancelButton {
                 text: "CANCEL"
-                variant: "normal"
                 Layout.fillWidth: true
                 onClicked: root.close()
             }
 
-            IndustrialButton {
+            ConfirmButton {
                 text: "CONFIRM"
-                variant: root.actionName === "EMERGENCY STOP" ? "danger" : "warning"
+                visible: root.actionName !== "EMERGENCY STOP"
                 locked: root.requiresTypedConfirmation && confirmInput.text !== root.confirmWord
                 Layout.fillWidth: true
+                onClicked: {
+                    root.close()
+                    root.confirmed()
+                }
+            }
+
+            DangerButton {
+                text: "CONFIRM"
+                visible: root.actionName === "EMERGENCY STOP"
+                locked: root.requiresTypedConfirmation && confirmInput.text !== root.confirmWord
+                Layout.fillWidth: true
+                Layout.preferredHeight: 46
                 onClicked: {
                     root.close()
                     root.confirmed()

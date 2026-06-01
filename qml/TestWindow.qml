@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import QtQuick.Controls
+import "components"
 
 ApplicationWindow {
     id: root
@@ -9,13 +10,13 @@ ApplicationWindow {
     height: 520
     visible: true
     visibility: Window.Windowed
-    title: "CHEVEL ROCKET - QML TEST"
+    title: "Chevel Rocket - QML Test"
     color: "#05070a"
 
     Component.onCompleted: {
         root.raise()
         root.requestActivate()
-        console.log("CHEVEL ROCKET test window loaded")
+        console.log("Chevel Rocket test window loaded")
     }
 
     Rectangle {
@@ -37,7 +38,7 @@ ApplicationWindow {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "CHEVEL ROCKET"
+                    text: "Chevel Rocket"
                     color: "#eaf9f1"
                     font.pixelSize: 38
                     font.bold: true
@@ -51,7 +52,7 @@ ApplicationWindow {
                     font.pixelSize: 18
                 }
 
-                Button {
+                SecondaryButton {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Close test"
                     onClicked: Qt.quit()

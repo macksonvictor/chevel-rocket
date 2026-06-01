@@ -46,6 +46,21 @@ Run:
 .\build\ChevelRobotControlCenter.exe
 ```
 
+Or double-click:
+
+```powershell
+run-chevel-rocket.bat
+```
+
+Browser portal:
+
+```powershell
+index.html
+```
+
+The browser page is only a project portal/splash. The real CHEVEL ROCKET core is
+the native Qt executable.
+
 Test minimal Qt/QML window:
 
 ```powershell
@@ -61,4 +76,5 @@ Test minimal Qt/QML window:
 - `src/RobotCommandInterface.*`: simulation command boundary, prepared for real integration.
 - `qml/Main.qml`: CHEVEL ROCKET core cockpit screen.
 - `qml/components/*.qml`: reusable dashboard components.
+- `assets/*.svg`: cold-neutral cockpit assets shared by the browser portal and Qt UI.
 - `docs/`: roadmap and implementation notes.

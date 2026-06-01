@@ -18,10 +18,10 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     QGuiApplication::setOrganizationName("Chevel");
-    QGuiApplication::setApplicationName("CHEVEL ROCKET");
+    QGuiApplication::setApplicationName("Chevel Rocket");
     QQuickStyle::setStyle("Basic");
 
-    qDebug() << "CHEVEL ROCKET boot";
+    qDebug() << "Chevel Rocket boot";
     qDebug() << "Application dir:" << QCoreApplication::applicationDirPath();
     qDebug() << "Qt QML imports:" << QLibraryInfo::path(QLibraryInfo::QmlImportsPath);
 
@@ -42,25 +42,26 @@ int main(int argc, char *argv[])
     const bool testWindow = QCoreApplication::arguments().contains("--test-window");
     const QString typeName = testWindow ? QStringLiteral("TestWindow") : QStringLiteral("Main");
 
-    qDebug() << "Loading QML module:" << "Chevel.Rocket" << typeName;
-    engine.loadFromModule("Chevel.Rocket", typeName);
+    const QString localQmlPath = QDir(QStringLiteral(CHEVEL_SOURCE_DIR))
+        .absoluteFilePath(testWindow ? "qml/TestWindow.qml" : "qml/Main.qml");
+    const QUrl localQmlUrl = QUrl::fromLocalFile(localQmlPath);
+
+    qDebug() << "Loading local QML first:" << localQmlUrl;
+    if (QFileInfo::exists(localQmlPath)) {
+        engine.load(localQmlUrl);
+    } else {
+        qWarning() << "Local QML file was not found. Loading module:" << "Chevel.Rocket" << typeName;
+        engine.loadFromModule("Chevel.Rocket", typeName);
+    }
 
     if (engine.rootObjects().isEmpty()) {
-        const QString localQmlPath = QDir(QStringLiteral(CHEVEL_SOURCE_DIR))
-            .absoluteFilePath(testWindow ? "qml/TestWindow.qml" : "qml/Main.qml");
-        const QUrl localQmlUrl = QUrl::fromLocalFile(localQmlPath);
-
-        qWarning() << "Module load returned no root objects. Trying local file:" << localQmlUrl;
-        if (QFileInfo::exists(localQmlPath)) {
-            engine.load(localQmlUrl);
-        } else {
-            qCritical() << "Local QML file was not found:" << localQmlPath;
-        }
+        qWarning() << "Local load returned no root objects. Trying module:" << "Chevel.Rocket" << typeName;
+        engine.loadFromModule("Chevel.Rocket", typeName);
     }
 
     qDebug() << "QML root object count:" << engine.rootObjects().size();
     if (engine.rootObjects().isEmpty()) {
-        qCritical() << "CHEVEL ROCKET failed to create the main QML window.";
+        qCritical() << "Chevel Rocket failed to create the main QML window.";
         return EXIT_FAILURE;
     }
 

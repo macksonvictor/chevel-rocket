@@ -38,6 +38,13 @@ Future asset direction:
 
 ## Integration Note
 
+The browser entry point (`index.html`) is a CHEVEL portal/splash. It does not run
+the control center itself because browsers do not safely launch native robot
+control executables.
+
+The native control center runs from `build/ChevelRobotControlCenter.exe` or
+`run-chevel-rocket.bat`.
+
 The current repository does not contain another CHEVEL AI application to embed
 this screen into. For now CHEVEL ROCKET runs as its own native Qt executable.
 
