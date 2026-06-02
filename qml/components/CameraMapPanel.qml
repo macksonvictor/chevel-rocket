@@ -70,7 +70,7 @@ Rectangle {
         }
 
         Text {
-            text: "SIMULATED INPUT BUS"
+            text: "LIVE INPUT BUS"
             color: "#8eeeff"
             font.pixelSize: 13
             font.family: "Consolas"

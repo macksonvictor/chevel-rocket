@@ -2,7 +2,6 @@
   <img src="./docs/assets/branding/chevel-rocket-logo.png" alt="Chevel Rocket" width="520" />
 </p>
 
-
 <p align="center">
   <strong>Native robotics control center for the Chevel ecosystem.</strong>
 </p>
@@ -13,7 +12,7 @@
   <img alt="QML" src="https://img.shields.io/badge/QML-Interface-111111" />
   <img alt="CMake" src="https://img.shields.io/badge/CMake-Ninja-111111?logo=cmake" />
   <img alt="MSVC" src="https://img.shields.io/badge/MSVC-2022-111111?logo=visualstudio" />
-  <img alt="Status" src="https://img.shields.io/badge/status-active%20prototype-111111" />
+  <img alt="Status" src="https://img.shields.io/badge/status-live--first%20prototype-111111" />
 </p>
 
 <p align="center">
@@ -21,9 +20,10 @@
   <a href="#official-gallery">Gallery</a> |
   <a href="#ecosystem">Ecosystem</a> |
   <a href="#interface-modules">Modules</a> |
+  <a href="#current-status">Status</a> |
   <a href="#wiesel-mini">WIESEL Mini</a> |
-  <a href="#architecture">Architecture</a> |
-  <a href="#local-build">Build</a> |
+  <a href="#local-build-windows">Windows</a> |
+  <a href="#linux-build---ubuntu-2404">Linux</a> |
   <a href="#roadmap">Roadmap</a>
 </p>
 
@@ -34,6 +34,8 @@
 Chevel Rocket is the native robotics control center of the Chevel ecosystem.
 
 Chevel AI is the intelligence layer: reasoning, memory, language, planning and tool use. Chevel Rocket is the robotics layer: cockpit interface, telemetry, supervision, safety states and future hardware integration.
+
+The cockpit is **LIVE-first**: commands are routed through `RobotCommandInterface` and only leave the app when a live command bridge is configured. Without that bridge, the UI stays in `LIVE STANDBY` and fails safely instead of pretending a real robot moved.
 
 The first physical target is **WIESEL Mini**, a low-cost prototype used to validate movement, telemetry, emergency states and the hardware bridge before larger robotic platforms.
 
@@ -143,22 +145,27 @@ Implemented now:
 - Qt 6 + QML native desktop interface.
 - C++ backend/controllers.
 - CMake + Ninja build.
-- Industrial/cockpit screen structure.
-- Simulated telemetry during runtime.
-- Robot health, gauges, command panel and logs.
-- Safety boundary through `RobotCommandInterface`.
-- Double confirmation for critical actions.
-- Emergency state control.
+- Industrial/cockpit main screen.
+- Telemetry estimator updated every 500 ms.
+- Robot health, gauges, command panel, logs and camera/map placeholder.
+- LIVE command boundary through `RobotCommandInterface`.
+- Double confirmation for critical commands.
+- Always-visible emergency stop.
+- Local voice diagnostics with Whisper/FFmpeg and Piper or Windows SAPI fallback.
 - QML startup diagnostics in `main.cpp`.
-- `--test-window` mode to validate Qt/QML startup.
+- `--test-window` mode to prove Qt/QML opens before loading the full cockpit.
 
 Planned next:
 
-- Real hardware bridge experiment.
+- Robot-side hardware bridge process for WIESEL Mini.
 - USB serial protocol with ESP32.
 - WIESEL Mini telemetry feedback.
 - Chevel AI high-level intent integration.
-- Windows test release packaging.
+- ROS 2, REST API, camera feed, SLAM or robotic arm drivers.
+- Real autonomy, learning, world model or voice-to-hardware actuation.
+- Windows/Linux test release packaging.
+
+Those items are documented as roadmap so the project is clear about what is already live-bridge-ready and what still needs a robot-side adapter.
 
 ---
 
@@ -195,6 +202,8 @@ chevel-rocket/
 |-- main.cpp
 |-- src/
 |-- qml/
+|-- scripts/
+|   `-- linux/
 |-- docs/
 |   |-- assets/
 |   |   |-- branding/
@@ -222,13 +231,15 @@ chevel-rocket/
 | UI controls | Qt Quick Controls |
 | Build | CMake + Ninja |
 | Windows toolchain | MSVC 2022 64-bit |
+| Linux target | Ubuntu 24.04 |
+| Voice | Whisper + FFmpeg + Piper / Windows SAPI fallback |
 | Prototype bridge | ESP32 planned |
 | Servo driver | PCA9685 planned |
 | First robot | WIESEL Mini |
 
 ---
 
-## Local Build
+## Local Build Windows
 
 Use **x64 Native Tools Command Prompt for VS 2022**.
 
@@ -249,8 +260,8 @@ C:\Qt\6.11.1\msvc2022_64
 Configure and build:
 
 ```powershell
-cd /d "C:\Users\mackson\OneDrive\Documentos\New project"
-cmake -S . -B build -G "Ninja" -DCMAKE_PREFIX_PATH="C:\Qt\6.11.1\msvc2022_64"
+cd /d "C:\END0-SYM\chevel\chevel-rocket"
+cmake -S . -B build -G "Ninja" -DCMAKE_PREFIX_PATH="C:\Qt\6.11.1\msvc2022_64" -DCMAKE_MAKE_PROGRAM="C:\Qt\Tools\Ninja\ninja.exe"
 cmake --build build
 ```
 
@@ -263,6 +274,7 @@ C:\Qt\6.11.1\msvc2022_64\bin\windeployqt.exe --debug --qmldir qml build\ChevelRo
 Run:
 
 ```powershell
+$env:CHEVEL_ROBOT_COMMAND_OUTBOX="C:\END0-SYM\chevel\chevel-rocket\build\live-command-outbox.jsonl"
 .\build\ChevelRobotControlCenter.exe
 ```
 
@@ -278,14 +290,56 @@ Browser portal:
 index.html
 ```
 
-The browser page is only a project portal/splash. The real CHEVEL ROCKET core is
-the native Qt executable.
+The browser page is only a project portal/splash. The real CHEVEL ROCKET core is the native Qt executable.
 
 Test minimal Qt/QML window:
 
 ```powershell
 .\build\ChevelRobotControlCenter.exe --test-window
 ```
+
+---
+
+## Linux Build - Ubuntu 24.04
+
+Bootstrap dependencies:
+
+```bash
+cd chevel-rocket
+scripts/linux/bootstrap-ubuntu-24.04.sh
+```
+
+Build:
+
+```bash
+scripts/linux/build.sh
+```
+
+Run:
+
+```bash
+export CHEVEL_ROBOT_COMMAND_OUTBOX="$HOME/.local/share/chevel-rocket/live-command-outbox.jsonl"
+export CHEVEL_AUDIO_BACKEND=auto
+export CHEVEL_PIPER_MODEL="$HOME/.local/share/chevel-rocket/models/<voice>.onnx"
+scripts/linux/run.sh
+```
+
+Test minimal Qt/QML window:
+
+```bash
+scripts/linux/run.sh --test-window
+```
+
+`CHEVEL_ROBOT_COMMAND_OUTBOX` is the first LIVE bridge contract. When set, live commands are appended as JSON lines for a future robot-side adapter to consume. If it is not set, the cockpit shows `LIVE STANDBY` and motion commands fail safely.
+
+Useful environment variables:
+
+- `CHEVEL_ROBOT_COMMAND_OUTBOX`: live command JSONL outbox.
+- `CHEVEL_AUDIO_BACKEND=auto|pulse|alsa|dshow`: microphone backend.
+- `CHEVEL_MIC_DEVICE`: optional explicit microphone device.
+- `CHEVEL_FFMPEG_EXE`, `CHEVEL_WHISPER_EXE`, `CHEVEL_PIPER_EXE`: tool paths.
+- `CHEVEL_PIPER_MODEL`: Piper `.onnx` voice model.
+- `CHEVEL_VOICE_OUTPUT_DIR`, `CHEVEL_AI_MODELS_DIR`: voice/model directories.
 
 ---
 
@@ -303,21 +357,38 @@ Test minimal Qt/QML window:
 
 ---
 
+## Project Layout
+
+- `main.cpp`: application bootstrap, QML module loading and diagnostics.
+- `CMakeLists.txt`: Qt executable and QML module packaging.
+- `src/RobotController.*`: state, logs and live telemetry estimator.
+- `src/TelemetryModel.*`: telemetry properties exposed to QML.
+- `src/RobotCommandInterface.*`: LIVE command boundary, prepared for robot integration.
+- `src/VoiceTranscriptionService.*`: FFmpeg + Whisper microphone/audio transcription.
+- `src/VoiceSynthesisService.*`: Piper TTS and Windows SAPI fallback.
+- `qml/Main.qml`: CHEVEL ROCKET core cockpit screen.
+- `qml/components/*.qml`: reusable dashboard components.
+- `assets/`: cockpit branding, robot renders and icon assets.
+- `scripts/linux/`: Ubuntu bootstrap/build/run helpers.
+- `docs/`: roadmap and implementation notes.
+
+---
+
 ## Roadmap
 
 ### Native app
 
 - Stabilize the Qt/QML cockpit.
-- Separate simulation and hardware modes clearly.
+- Keep LIVE mode as the primary path and fallback modes clearly separated.
 - Add better diagnostics for QML startup and runtime state.
-- Prepare Windows test releases.
+- Prepare Windows and Linux test releases.
 
 ### Robotics
 
 - Build WIESEL Mini.
 - Connect ESP32 over USB serial.
 - Read telemetry from the prototype.
-- Send supervised movement commands.
+- Send supervised movement commands through the bridge.
 - Add emergency stop feedback.
 - Add camera and sensor experiments.
 
@@ -333,13 +404,3 @@ Test minimal Qt/QML window:
 ## Maintainer
 
 Developed by **Mackson Victor** as part of the Chevel ecosystem.
-
-- `main.cpp`: application bootstrap, QML module loading and diagnostics.
-- `CMakeLists.txt`: Qt executable and QML module packaging.
-- `src/RobotController.*`: state, logs and simulated telemetry.
-- `src/TelemetryModel.*`: telemetry properties exposed to QML.
-- `src/RobotCommandInterface.*`: simulation command boundary, prepared for real integration.
-- `qml/Main.qml`: CHEVEL ROCKET core cockpit screen.
-- `qml/components/*.qml`: reusable dashboard components.
-- `assets/*.svg`: cold-neutral cockpit assets shared by the browser portal and Qt UI.
-- `docs/`: roadmap and implementation notes.

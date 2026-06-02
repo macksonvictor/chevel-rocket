@@ -51,6 +51,8 @@ class RobotController : public QObject
     Q_PROPERTY(QString terminalTranscript READ terminalTranscript NOTIFY terminalTranscriptChanged)
     Q_PROPERTY(QString robotState READ robotState NOTIFY robotStateChanged)
     Q_PROPERTY(QString connectionState READ connectionState NOTIFY connectionStateChanged)
+    Q_PROPERTY(bool liveBridgeAvailable READ liveBridgeAvailable NOTIFY connectionStateChanged)
+    Q_PROPERTY(QString liveBridgePath READ liveBridgePath NOTIFY connectionStateChanged)
     Q_PROPERTY(bool emergencyActive READ emergencyActive NOTIFY emergencyActiveChanged)
     Q_PROPERTY(bool armed READ armed NOTIFY armedChanged)
     Q_PROPERTY(QStringList logs READ logs NOTIFY logsChanged)
@@ -97,6 +99,8 @@ public:
     QString terminalTranscript() const;
     QString robotState() const;
     QString connectionState() const;
+    bool liveBridgeAvailable() const;
+    QString liveBridgePath() const;
     bool emergencyActive() const;
     bool armed() const;
     QStringList logs() const;
@@ -118,6 +122,7 @@ public:
     Q_INVOKABLE bool toggleVirtualFences();
     Q_INVOKABLE bool testVoice();
     Q_INVOKABLE bool runVoiceDiagnostics();
+    Q_INVOKABLE bool testMicrophone();
     Q_INVOKABLE bool testWhisper();
     Q_INVOKABLE bool testPiper();
     Q_INVOKABLE bool speakText(const QString &text);
@@ -191,6 +196,8 @@ private:
     void appendVoiceDiagnostics(const QString &line);
     QString toolStatus(bool available) const;
     void updateVoiceStatusFromTools();
+    void refreshConnectionState();
+    bool reportCommandInterfaceFailure(const QString &commandName);
 
     RobotCommandInterface m_commandInterface;
     TelemetryModel m_telemetry;
@@ -205,13 +212,13 @@ private:
     double m_signalStrength = 87.0;
     double m_cpuLoad = 21.0;
     double m_missionRisk = 8.0;
-    QString m_missionStatus = "EM ANDAMENTO";
+    QString m_missionStatus = "READY";
     int m_missionElapsedSeconds = 28 * 60 + 15;
     double m_missionProgress = 62.0;
     double m_missionDistance = 1.42;
     int m_completedObjectives = 5;
     int m_totalObjectives = 8;
-    bool m_missionRunning = true;
+    bool m_missionRunning = false;
     bool m_safeMode = true;
     bool m_virtualFencesActive = true;
     QString m_voiceStatus = "ONLINE";
@@ -220,11 +227,11 @@ private:
     double m_memoryUsage = 68.0;
     double m_storageUsage = 54.0;
     QStringList m_terminalLines;
-    QString m_robotState = "MOVING";
-    QString m_connectionState = "SIMULATED";
+    QString m_robotState = "IDLE";
+    QString m_connectionState = "LIVE STANDBY";
     bool m_emergencyActive = false;
-    bool m_armed = true;
-    bool m_simulationMode = true;
+    bool m_armed = false;
+    bool m_simulationMode = false;
     double m_phase = 0.0;
     bool m_temperatureWarningLogged = false;
     bool m_signalWarningLogged = false;

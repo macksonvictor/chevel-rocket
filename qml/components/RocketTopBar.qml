@@ -6,16 +6,16 @@ Rectangle {
 
     property string timeText: "14:28:47"
     property string dateText: "28/05/2025"
-    property bool simulationMode: true
+    property bool simulationMode: false
     property bool safeMode: true
     property bool emergencyActive: false
-    property string connectionState: "SIMULATED"
+    property string connectionState: "LIVE STANDBY"
 
     signal simulationModeRequested(bool simulation)
     signal safeModeToggleRequested()
     signal menuRequested()
 
-    implicitHeight: 94
+    implicitHeight: 116
     color: "transparent"
 
     RowLayout {
@@ -25,31 +25,20 @@ Rectangle {
         spacing: 16
 
         Item {
-            Layout.preferredWidth: 420
-            Layout.maximumWidth: 420
+            Layout.preferredWidth: 430
+            Layout.maximumWidth: 430
             Layout.fillHeight: true
 
             Image {
                 anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.topMargin: 0
-                width: 420
-                height: 88
-                source: "qrc:/qt/qml/Chevel/Rocket/assets/ui/branding/chevel-rocket-header.png"
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.leftMargin: 0
+                width: 430
+                height: 110
+                source: "qrc:/qt/qml/Chevel/Rocket/assets/ui/branding/chevel-rocket-full.png"
                 fillMode: Image.PreserveAspectFit
                 smooth: true
                 mipmap: true
-            }
-
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: 98
-                anchors.top: parent.top
-                anchors.topMargin: 72
-                text: "Mission & Robot Control"
-                color: "#A9B4C2"
-                font.pixelSize: 14
-                font.letterSpacing: 0.4
             }
         }
 
@@ -60,9 +49,9 @@ Rectangle {
             status: root.emergencyActive ? "OFFLINE" : root.connectionState
             iconText: "\u25ad"
             iconSource: root.simulationMode ? "assets/ui/icons/single/simulated.png" : "assets/ui/icons/single/live.png"
-            Layout.preferredWidth: 178
-            Layout.minimumWidth: 178
-            Layout.maximumWidth: 178
+            Layout.preferredWidth: 200
+            Layout.minimumWidth: 200
+            Layout.maximumWidth: 200
             Layout.preferredHeight: 46
         }
 

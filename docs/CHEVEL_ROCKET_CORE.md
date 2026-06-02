@@ -5,7 +5,9 @@
 CHEVEL ROCKET is the native control center screen for CHEVEL. It is designed to
 look and behave like a machine control panel, not like a web dashboard.
 
-This first version is intentionally simulation-only.
+This first version is LIVE-first but bridge-gated. It presents the cockpit as a
+real control surface, while physical robot commands only leave the app when the
+`CHEVEL_ROBOT_COMMAND_OUTBOX` bridge is configured.
 
 ## Safety Rules In This Version
 
@@ -14,7 +16,8 @@ This first version is intentionally simulation-only.
 - `ARM ROBOT`, `START MISSION`, `REBOOT SYSTEM` and `EMERGENCY STOP` are critical.
 - When emergency is active, commands are blocked except clearing emergency.
 - The UI talks to `RobotController`; it does not talk directly to hardware.
-- `RobotCommandInterface` is the future hardware boundary and is simulated now.
+- `RobotCommandInterface` is the live hardware boundary and currently writes
+  JSONL commands to the configured outbox bridge.
 - Every action creates a timestamped log.
 
 ## Visual Direction
@@ -42,8 +45,8 @@ The browser entry point (`index.html`) is a CHEVEL portal/splash. It does not ru
 the control center itself because browsers do not safely launch native robot
 control executables.
 
-The native control center runs from `build/ChevelRobotControlCenter.exe` or
-`run-chevel-rocket.bat`.
+The native control center runs from `build/ChevelRobotControlCenter.exe`,
+`run-chevel-rocket.bat`, or on Ubuntu through `scripts/linux/run.sh`.
 
 The current repository does not contain another CHEVEL AI application to embed
 this screen into. For now CHEVEL ROCKET runs as its own native Qt executable.
