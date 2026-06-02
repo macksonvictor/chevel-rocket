@@ -87,7 +87,7 @@ ApplicationWindow {
             robotController.setSimulationMode(true)
             return
         }
-        root.openCritical("LIVE MODE", "LIVE is prepared for a future hardware adapter. This build still keeps commands safe/simulated. Type CONFIRMAR to switch the cockpit indicator.", "enableLive")
+        root.openCritical("LIVE MODE", "LIVE mode uses the RobotCommandInterface bridge. Commands only leave the cockpit when CHEVEL_ROBOT_COMMAND_OUTBOX is configured. Type CONFIRMAR to continue.", "enableLive")
     }
 
     function showDetails(title, body) {
@@ -215,7 +215,7 @@ ApplicationWindow {
             onSafeModeToggleRequested: robotController.toggleSafeMode()
             onMenuRequested: root.openTopRightMenu()
             Layout.fillWidth: true
-            Layout.preferredHeight: 104
+            Layout.preferredHeight: 116
         }
 
         RowLayout {
@@ -265,7 +265,7 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 84
                         onClicked: root.openCritical("EMERGENCY STOP",
-                                                     "This engages the simulated emergency stop and blocks all mock commands. Type CONFIRMAR to continue.",
+                                                     "This latches the cockpit emergency stop and sends EMERGENCY_STOP through the live bridge when configured. Type CONFIRMAR to continue.",
                                                      "emergencyStop")
                     }
                 }
@@ -316,14 +316,16 @@ ApplicationWindow {
                 onSettingsRequested: root.showDetails("Chevel Rocket Settings",
                                                       "Modo: " + (robotController.simulationMode ? "SIMULATION" : "LIVE") +
                                                       "\nSafe mode: " + (robotController.safeMode ? "ATIVO" : "DESLIGADO") +
+                                                      "\nBridge live: " + (robotController.liveBridgeAvailable ? "READY" : "MISSING") +
+                                                      "\nOutbox: " + robotController.liveBridgePath +
                                                       "\nWhisper: " + robotController.whisperPath +
                                                       "\nPiper: " + robotController.piperPath +
                                                       "\nModelo Piper: " + robotController.piperModelPath +
                                                       "\nSaida de voz: " + robotController.voiceOutputDir +
-                                                      "\n\nPara trocar caminhos, use variaveis de ambiente: CHEVEL_WHISPER_EXE, CHEVEL_FFMPEG_EXE, CHEVEL_PIPER_EXE, CHEVEL_PIPER_MODEL, CHEVEL_VOICE_OUTPUT_DIR e CHEVEL_AI_MODELS_DIR.")
+                                                      "\n\nVariaveis: CHEVEL_ROBOT_COMMAND_OUTBOX, CHEVEL_WHISPER_EXE, CHEVEL_FFMPEG_EXE, CHEVEL_PIPER_EXE, CHEVEL_PIPER_MODEL, CHEVEL_MIC_DEVICE, CHEVEL_AUDIO_BACKEND, CHEVEL_VOICE_OUTPUT_DIR e CHEVEL_AI_MODELS_DIR.")
                 onLogsRequested: root.currentTab = 5
                 onAboutRequested: root.showDetails("About Chevel Rocket",
-                                                   "CHEVEL ROCKET\nMission & Robot Control\n\nPainel nativo Qt/QML em modo simulacao, com controle visual do DUM-E, logs, terminal, seguranca e diagnostico de voz/IA local.\n\nIA local: " + robotController.aiModelName + "\nPipeline: " + robotController.voicePipeline)
+                                                   "CHEVEL ROCKET\nMission & Robot Control\n\nPainel nativo Qt/QML LIVE-first para controle do DUM-E, com bridge seguro, logs, terminal, seguranca e diagnostico de voz/IA local.\n\nIA local: " + robotController.aiModelName + "\nPipeline: " + robotController.voicePipeline)
                 onFullscreenRequested: root.toggleFullscreen()
                 onReloadDiagnosticsRequested: root.openVoiceDiagnostics()
                 onExitRequested: Qt.quit()
@@ -550,6 +552,7 @@ ApplicationWindow {
                         title: "MISSÃO ATUAL"
                         iconText: "\u25ce"
                         iconSource: "assets/ui/icons/single/mission.png"
+                        iconSize: 30
                         Layout.fillWidth: true
                         Layout.fillHeight: true
 
@@ -678,10 +681,10 @@ ApplicationWindow {
                             rowSpacing: 10
                             columnSpacing: 10
 
-                            RocketButton { text: "START MISSION"; iconText: "\u25b6"; iconSource: "assets/ui/icons/single/start.png"; variant: "secondary"; labelPixelSize: 11; locked: robotController.emergencyActive; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("START MISSION", "This starts a simulated mission profile only. Type CONFIRMAR to continue.", "startMission") }
+                            RocketButton { text: "START MISSION"; iconText: "\u25b6"; iconSource: "assets/ui/icons/single/start.png"; variant: "secondary"; labelPixelSize: 11; locked: robotController.emergencyActive; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("START MISSION", "LIVE command will be sent through RobotCommandInterface when the bridge is configured. Type CONFIRMAR to continue.", "startMission") }
                             RocketButton { text: "PAUSE MISSION"; iconText: "||"; iconSource: "assets/ui/icons/single/pause.png"; variant: "secondary"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: robotController.pauseMission() }
-                            RocketButton { text: "RETURN HOME"; iconText: "\u2302"; iconSource: "assets/ui/icons/single/home.png"; variant: "secondary"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("RETURN HOME", "Return Home move o DUM-E para a base em modo simulado e registra o comando. Type CONFIRMAR to continue.", "returnHome") }
-                            RocketButton { text: "CONFIRM"; iconText: "\u2713"; iconSource: "assets/ui/icons/single/confirm.png"; variant: "confirm"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("MISSION CONFIRM", "Confirm the queued simulated mission step. Type CONFIRMAR to continue.", "confirmAction") }
+                            RocketButton { text: "RETURN HOME"; iconText: "\u2302"; iconSource: "assets/ui/icons/single/home.png"; variant: "secondary"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("RETURN HOME", "Return Home is a LIVE motion command through the command bridge. Type CONFIRMAR to continue.", "returnHome") }
+                            RocketButton { text: "CONFIRM"; iconText: "\u2713"; iconSource: "assets/ui/icons/single/confirm.png"; variant: "confirm"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("MISSION CONFIRM", "Confirm the queued mission step. Type CONFIRMAR to continue.", "confirmAction") }
                         }
 
                         RocketButton { text: "CANCEL"; iconText: "\u00d7"; iconSource: "assets/ui/icons/single/cancel.png"; variant: "cancel"; Layout.fillWidth: true; Layout.preferredHeight: 42; onClicked: robotController.cancelAction() }
@@ -956,10 +959,10 @@ ApplicationWindow {
                         columns: 2
                         columnSpacing: 10
                         rowSpacing: 10
-                        RocketButton { text: "ARM ROBOT"; iconText: "\u2699"; variant: "primary"; Layout.fillWidth: true; Layout.preferredHeight: 46; locked: robotController.emergencyActive || robotController.armed; onClicked: root.openCritical("ARM ROBOT", "Arm Dum-E inside simulation only. Type CONFIRMAR to continue.", "armRobot") }
+                        RocketButton { text: "ARM ROBOT"; iconText: "\u2699"; variant: "primary"; Layout.fillWidth: true; Layout.preferredHeight: 46; locked: robotController.emergencyActive || robotController.armed; onClicked: root.openCritical("ARM ROBOT", "Arm Dum-E through RobotCommandInterface when the live bridge is configured. Type CONFIRMAR to continue.", "armRobot") }
                         RocketButton { text: "DISARM ROBOT"; iconText: "\u2699"; variant: "disabled"; Layout.fillWidth: true; Layout.preferredHeight: 46; locked: !robotController.armed; onClicked: robotController.disarmRobot() }
                         RocketButton { text: "CALIBRATE SENSORS"; iconText: "\u25ce"; variant: "outlined"; Layout.fillWidth: true; Layout.preferredHeight: 46; onClicked: robotController.calibrateSensors() }
-                        RocketButton { text: "REBOOT SYSTEM"; iconText: "\u21bb"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 46; onClicked: root.openCritical("REBOOT SYSTEM", "This performs a simulated controller reboot. Type CONFIRMAR to continue.", "rebootSystem") }
+                        RocketButton { text: "REBOOT SYSTEM"; iconText: "\u21bb"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 46; onClicked: root.openCritical("REBOOT SYSTEM", "This queues a controller reboot through the live bridge when configured. Type CONFIRMAR to continue.", "rebootSystem") }
                         RocketButton { text: "MOVER FRENTE"; iconText: "\u2191"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; locked: robotController.emergencyActive; onClicked: robotController.moveRobot("forward") }
                         RocketButton { text: "MOVER TRAS"; iconText: "\u2193"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; locked: robotController.emergencyActive; onClicked: robotController.moveRobot("backward") }
                         RocketButton { text: "ESQUERDA"; iconText: "\u2190"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; locked: robotController.emergencyActive; onClicked: robotController.moveRobot("left") }
@@ -996,7 +999,7 @@ ApplicationWindow {
                     spacing: 22
                     RocketMetricRow { label: "Modelo de IA Local"; value: robotController.aiModelName; valueColor: root.cyan; Layout.fillWidth: true }
                     RocketMetricRow { label: "Segurança"; value: "ATIVA"; valueColor: root.green; Layout.fillWidth: true }
-                    RocketButton { text: "REINICIAR IA"; iconText: "\u21bb"; variant: "outlined"; labelPixelSize: 11; Layout.preferredWidth: 132; Layout.preferredHeight: 34; onClicked: root.openCritical("REBOOT SYSTEM", "Restart the simulated local AI service. Type CONFIRMAR to continue.", "rebootSystem") }
+                    RocketButton { text: "REINICIAR IA"; iconText: "\u21bb"; variant: "outlined"; labelPixelSize: 11; Layout.preferredWidth: 132; Layout.preferredHeight: 34; onClicked: root.openCritical("REBOOT SYSTEM", "Restart the local AI/control service through the live bridge when configured. Type CONFIRMAR to continue.", "rebootSystem") }
                 }
             }
         }
@@ -1076,7 +1079,7 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 Text { text: "Comando recebido:\n" + (root.terminalCommand.length > 0 ? root.terminalCommand : "status"); color: "#D0D7DE"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
                 MiniLine {}
-                Text { text: "Interpretação (" + robotController.aiModelName + "):\nComando simulado seguro dentro do cockpit Rocket. Nenhum comando real do sistema operacional será enviado."; color: "#D0D7DE"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+                Text { text: "Interpretação (" + robotController.aiModelName + "):\nComando preparado no cockpit LIVE-first. Envio físico só acontece quando a ponte RobotCommandInterface estiver configurada."; color: "#D0D7DE"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 42
@@ -1236,7 +1239,7 @@ ApplicationWindow {
                     Image { source: "assets/ui/safety/emergency-stop-large.png"; Layout.fillWidth: true; Layout.fillHeight: true; fillMode: Image.PreserveAspectFit; smooth: true }
                     Text { text: "PRESS TO STOP ALL SYSTEMS"; color: root.red; font.pixelSize: 17; font.bold: true; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true }
                     Text { text: "Immediately halts all robot motion, actuators, and mission processes."; color: root.muted; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true }
-                    RocketButton { text: "CRITICAL ACTION"; iconText: "!"; variant: "emergency"; Layout.fillWidth: true; Layout.preferredHeight: 58; onClicked: root.openCritical("EMERGENCY STOP", "This engages the simulated emergency stop and blocks all mock commands. Type CONFIRMAR to continue.", "emergencyStop") }
+                    RocketButton { text: "CRITICAL ACTION"; iconText: "!"; variant: "emergency"; Layout.fillWidth: true; Layout.preferredHeight: 58; onClicked: root.openCritical("EMERGENCY STOP", "This latches emergency locally and sends EMERGENCY_STOP through the live bridge when configured. Type CONFIRMAR to continue.", "emergencyStop") }
                     RocketButton { text: "RESET EMERGENCY"; iconText: "\u21bb"; variant: "warning"; Layout.fillWidth: true; Layout.preferredHeight: 44; locked: !robotController.emergencyActive; onClicked: robotController.clearEmergency() }
                 }
 
@@ -1339,7 +1342,7 @@ ApplicationWindow {
                                 model: [["Safety Controller", "ONLINE"], ["E-Stop Network", "ONLINE"], ["IO Safety Network", "ONLINE"], ["Robot Controller", "OFFLINE"], ["Drive Safety", "ONLINE"]]
                                 RocketMetricRow { required property var modelData; label: modelData[0]; value: modelData[1]; valueColor: modelData[1] === "OFFLINE" ? root.red : root.green; Layout.fillWidth: true }
                             }
-                            RocketButton { text: "GO OFFLINE (MAINTENANCE)"; iconText: "\u25cc"; variant: "outlined"; Layout.fillWidth: true; Layout.preferredHeight: 34; onClicked: root.showDetails("Maintenance Mode", "Offline maintenance is a simulated placeholder. Real hardware isolation will be connected later.") }
+                            RocketButton { text: "GO OFFLINE (MAINTENANCE)"; iconText: "\u25cc"; variant: "outlined"; Layout.fillWidth: true; Layout.preferredHeight: 34; onClicked: root.showDetails("Maintenance Mode", "Offline maintenance will isolate live hardware through the bridge when the robot adapter is connected.") }
                         }
                     }
                 }
@@ -1369,7 +1372,7 @@ ApplicationWindow {
                     RowLayout {
                         Layout.fillWidth: true
                         RocketButton { text: "CANCEL"; iconText: "\u00d7"; variant: "cancel"; Layout.fillWidth: true; Layout.preferredHeight: 58; onClicked: robotController.cancelAction() }
-                        RocketButton { text: "CONFIRM"; iconText: "\u2713"; variant: "emergency"; Layout.fillWidth: true; Layout.preferredHeight: 58; onClicked: root.openCritical("SAFETY CONFIRM", "Confirm safe-mode simulation only. Type CONFIRMAR to continue.", "") }
+                        RocketButton { text: "CONFIRM"; iconText: "\u2713"; variant: "emergency"; Layout.fillWidth: true; Layout.preferredHeight: 58; onClicked: root.openCritical("SAFETY CONFIRM", "Confirm the safety action. Type CONFIRMAR to continue.", "") }
                     }
                 }
             }
@@ -1459,13 +1462,13 @@ ApplicationWindow {
                     Layout.preferredHeight: 86
                     RowLayout {
                         Layout.fillWidth: true
-                        RocketButton { text: "TESTAR MICROFONE"; iconText: "\u03bc"; iconSource: "assets/ui/icons/single/voice.png"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; onClicked: { robotController.testWhisper(); root.openVoiceDiagnostics() } }
-                        RocketButton { text: "TESTAR TTS"; iconText: "\u266b"; iconSource: "assets/ui/icons/single/active-voice.png"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; onClicked: { robotController.testPiper(); root.openVoiceDiagnostics() } }
+                        RocketButton { text: "TESTAR MICROFONE"; iconText: "\u03bc"; iconSource: "assets/ui/icons/single/voice.png"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; onClicked: { robotController.testMicrophone(); root.openVoiceDiagnostics() } }
+                        RocketButton { text: "TESTAR FALA"; iconText: "\u266b"; iconSource: "assets/ui/icons/single/active-voice.png"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; onClicked: { robotController.testPiper(); root.openVoiceDiagnostics() } }
                         RocketButton { text: "DIAGNOSTICO"; iconText: "\u258c"; iconSource: "assets/ui/icons/single/terminal.png"; variant: "primary"; Layout.fillWidth: true; Layout.preferredHeight: 42; onClicked: root.openVoiceDiagnostics() }
                     }
                 }
                 RocketPanel {
-                    title: "SIMULAR COMANDO DE VOZ"
+                    title: "COMANDO DE VOZ LOCAL"
                     Layout.fillWidth: true
                     Layout.preferredHeight: 92
                     RowLayout {
@@ -1480,7 +1483,7 @@ ApplicationWindow {
                             background: Rectangle { radius: 4; color: "#0B1117"; border.width: 1; border.color: "#273441" }
                             onAccepted: robotController.simulateVoiceCommand(root.voiceCommand)
                         }
-                        RocketButton { text: "SIMULAR"; iconText: "\u03bc"; iconSource: "assets/ui/icons/single/voice.png"; variant: "primary"; Layout.preferredWidth: 128; Layout.preferredHeight: 42; onClicked: robotController.simulateVoiceCommand(root.voiceCommand) }
+                        RocketButton { text: "ENVIAR"; iconText: "\u03bc"; iconSource: "assets/ui/icons/single/voice.png"; variant: "primary"; Layout.preferredWidth: 128; Layout.preferredHeight: 42; onClicked: robotController.simulateVoiceCommand(root.voiceCommand) }
                     }
                 }
             }
@@ -1595,7 +1598,7 @@ ApplicationWindow {
                     Layout.preferredHeight: 42
                     RocketButton { text: "AUTO SCROLL"; iconText: "\u25cf"; variant: "outlined"; labelPixelSize: 11; Layout.preferredWidth: 146; Layout.preferredHeight: 34 }
                     Item { Layout.fillWidth: true }
-                    Text { text: "Showing " + robotController.logs.length + " simulated cockpit logs"; color: root.muted; font.pixelSize: 12 }
+                    Text { text: "Showing " + robotController.logs.length + " cockpit logs"; color: root.muted; font.pixelSize: 12 }
                     Item { Layout.fillWidth: true }
                     Repeater {
                         model: ["\u226a", "\u2039", "1", "2", "3", "...", "125", "\u203a", "\u226b"]

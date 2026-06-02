@@ -27,7 +27,7 @@ Rectangle {
             return "OFFLINE"
         if (controller.signalStrength < 25)
             return "ERROR"
-        if (controller.signalStrength < 45 || controller.connectionState === "SIMULATED")
+        if (controller.signalStrength < 45 || controller.connectionState === "SIM FALLBACK")
             return "WARNING"
         return "OK"
     }
@@ -65,7 +65,7 @@ Rectangle {
         StatusPill { label: "Sensors"; valueText: controller && controller.emergencyActive ? "OFFLINE" : "OK"; status: valueText; Layout.fillWidth: true }
         StatusPill { label: "Camera"; valueText: "OFFLINE"; status: "OFFLINE"; Layout.fillWidth: true }
         StatusPill { label: "Lidar"; valueText: "WARNING"; status: "WARNING"; Layout.fillWidth: true }
-        StatusPill { label: "GPS/Pos"; valueText: controller && controller.connectionState === "SIMULATED" ? "SIMULATED" : "OK"; status: valueText; Layout.fillWidth: true }
+        StatusPill { label: "GPS/Pos"; valueText: controller && controller.connectionState === "SIM FALLBACK" ? "FALLBACK" : "OK"; status: valueText; Layout.fillWidth: true }
         StatusPill { label: "Control"; valueText: signalStatus(); status: signalStatus(); Layout.fillWidth: true }
         StatusPill { label: "Power"; valueText: powerStatus(); status: powerStatus(); Layout.fillWidth: true }
 

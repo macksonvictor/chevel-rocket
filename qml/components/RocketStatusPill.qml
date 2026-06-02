@@ -23,13 +23,13 @@ Item {
     }
 
     function statusTone() {
-        if (status === "OK" || status === "CONNECTED" || status === "ONLINE" || status === "READY" || status === "SAFE MODE" || status === "ACTIVE" || status === "ATIVO" || status === "STABLE")
+        if (status === "OK" || status === "CONNECTED" || status === "ONLINE" || status === "READY" || status === "LIVE READY" || status === "SAFE MODE" || status === "ACTIVE" || status === "ATIVO" || status === "STABLE")
             return "ready"
-        if (status === "SIMULATED" || status === "SIMULATION" || status === "MODEL")
+        if (status === "SIMULATED" || status === "SIMULATION" || status === "SIM FALLBACK" || status === "MODEL")
             return "cyan"
-        if (status === "WARNING" || status === "WARN")
+        if (status === "WARNING" || status === "WARN" || status === "LIVE STANDBY")
             return "warning"
-        if (status === "ERROR" || status === "EMERGENCY")
+        if (status === "ERROR" || status === "EMERGENCY" || status === "OFFLINE")
             return "danger"
         return "offline"
     }

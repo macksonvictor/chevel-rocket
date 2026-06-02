@@ -99,8 +99,11 @@ file(GLOB ROCKET_ICON_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEP
 )
 
 set(ASSET_FILES
+    assets/ui/branding/chevel-rocket-emblem.png
+    assets/ui/branding/chevel-rocket-full.png
     assets/ui/branding/chevel-rocket-header.png
     assets/ui/branding/chevel-rocket-logo.png
+    assets/ui/branding/chevel-rocket-wordmark.png
     assets/ui/feeds/camera-feed.png
     assets/ui/icons/actions.png
     assets/ui/icons/mission.png
@@ -114,8 +117,11 @@ set(ASSET_FILES
     assets/ui/safety/emergency-stop-large.png
 )
 
+set_source_files_properties(assets/ui/branding/chevel-rocket-emblem.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-emblem.png)
+set_source_files_properties(assets/ui/branding/chevel-rocket-full.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-full.png)
 set_source_files_properties(assets/ui/branding/chevel-rocket-header.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-header.png)
 set_source_files_properties(assets/ui/branding/chevel-rocket-logo.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-logo.png)
+set_source_files_properties(assets/ui/branding/chevel-rocket-wordmark.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-wordmark.png)
 set_source_files_properties(assets/ui/feeds/camera-feed.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/feeds/camera-feed.png)
 set_source_files_properties(assets/ui/icons/actions.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/icons/actions.png)
 set_source_files_properties(assets/ui/icons/mission.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/icons/mission.png)

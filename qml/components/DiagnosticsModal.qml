@@ -63,7 +63,7 @@ Popup {
                     font.bold: true
                 }
                 Text {
-                    text: "Whisper, FFmpeg, Piper e saida de audio do Chevel Rocket."
+                    text: "Whisper, FFmpeg, TTS e saida de audio do Chevel Rocket."
                     color: "#9AA3AF"
                     font.pixelSize: 12
                 }
@@ -103,7 +103,7 @@ Popup {
                 Layout.fillWidth: true
             }
             ToolStatusCard {
-                title: "Piper TTS"
+                title: "TTS / Voz"
                 status: controller ? controller.piperStatus : "MISSING"
                 pathText: controller ? controller.piperPath : ""
                 iconSource: "assets/ui/icons/single/active-voice.png"
@@ -121,7 +121,8 @@ Popup {
         RowLayout {
             Layout.fillWidth: true
             RocketButton { text: "TESTAR WHISPER"; iconSource: "assets/ui/icons/single/voice.png"; variant: "primary"; Layout.preferredWidth: 168; Layout.preferredHeight: 40; onClicked: if (controller) controller.testWhisper() }
-            RocketButton { text: "TESTAR PIPER"; iconSource: "assets/ui/icons/single/active-voice.png"; variant: "secondary"; Layout.preferredWidth: 150; Layout.preferredHeight: 40; onClicked: if (controller) controller.testPiper() }
+            RocketButton { text: "OUVIR 4S"; iconSource: "assets/ui/icons/single/active-voice.png"; variant: "primary"; Layout.preferredWidth: 126; Layout.preferredHeight: 40; onClicked: if (controller) controller.testMicrophone() }
+            RocketButton { text: "TESTAR FALA"; iconSource: "assets/ui/icons/single/active-voice.png"; variant: "secondary"; Layout.preferredWidth: 150; Layout.preferredHeight: 40; onClicked: if (controller) controller.testPiper() }
             RocketButton { text: "ABRIR PASTA DE SAIDA"; iconSource: "assets/ui/icons/single/folder-logs.png"; variant: "outlined"; Layout.preferredWidth: 210; Layout.preferredHeight: 40; onClicked: if (controller) controller.openVoiceOutputFolder() }
             Item { Layout.fillWidth: true }
             RocketButton { text: "RELOAD"; iconSource: "assets/ui/icons/single/terminal.png"; variant: "outlined"; Layout.preferredWidth: 112; Layout.preferredHeight: 40; onClicked: if (controller) controller.runVoiceDiagnostics() }

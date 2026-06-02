@@ -9,6 +9,7 @@ Rectangle {
     property string subtitle: ""
     property string iconText: ""
     property string iconSource: ""
+    property int iconSize: 24
     property bool compact: false
     property color accent: "#22D3EE"
 
@@ -59,8 +60,8 @@ Rectangle {
             Image {
                 visible: root.iconSource.length > 0
                 source: root.resolvedIconSource()
-                Layout.preferredWidth: visible ? 24 : 0
-                Layout.preferredHeight: visible ? 24 : 0
+                Layout.preferredWidth: visible ? root.iconSize : 0
+                Layout.preferredHeight: visible ? root.iconSize : 0
                 fillMode: Image.PreserveAspectFit
                 smooth: true
                 opacity: 0.95
@@ -73,7 +74,7 @@ Rectangle {
                 font.pixelSize: 19
                 font.bold: true
                 horizontalAlignment: Text.AlignHCenter
-                Layout.preferredWidth: visible ? 24 : 0
+                Layout.preferredWidth: visible ? root.iconSize : 0
             }
 
             ColumnLayout {

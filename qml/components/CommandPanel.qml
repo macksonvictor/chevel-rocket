@@ -39,7 +39,7 @@ Rectangle {
             locked: root.emergency || root.armed
             Layout.fillWidth: true
             onClicked: root.criticalCommand("ARM ROBOT",
-                                            "This will arm the robot in simulation mode. Type CONFIRMAR to continue.",
+                                            "This will arm the robot through RobotCommandInterface when the live bridge is configured. Type CONFIRMAR to continue.",
                                             "armRobot")
         }
 
@@ -67,7 +67,7 @@ Rectangle {
             locked: root.emergency || !root.armed
             Layout.fillWidth: true
             onClicked: root.criticalCommand("START MISSION",
-                                            "This starts the simulated mission profile. Type CONFIRMAR to continue.",
+                                            "This starts the mission through RobotCommandInterface when the live bridge is configured. Type CONFIRMAR to continue.",
                                             "startMission")
         }
 
@@ -99,7 +99,7 @@ Rectangle {
             locked: root.emergency
             Layout.fillWidth: true
             onClicked: root.criticalCommand("REBOOT SYSTEM",
-                                            "This performs a simulated controller reboot. Type CONFIRMAR to continue.",
+                                            "This queues a controller reboot through RobotCommandInterface when the live bridge is configured. Type CONFIRMAR to continue.",
                                             "rebootSystem")
         }
 
@@ -120,7 +120,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 88
             onClicked: root.criticalCommand("EMERGENCY STOP",
-                                            "This engages the simulated emergency stop and blocks all commands. Type CONFIRMAR to continue.",
+                                            "This latches emergency locally and sends EMERGENCY_STOP through the live bridge when configured. Type CONFIRMAR to continue.",
                                             "emergencyStop")
         }
     }

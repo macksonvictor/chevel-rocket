@@ -19,6 +19,8 @@ public:
     QString outputDir() const;
     bool piperAvailable() const;
     bool piperModelAvailable() const;
+    bool fallbackTtsAvailable() const;
+    QString activeEngineName() const;
 
     bool speak(const QString &text);
 
@@ -29,6 +31,8 @@ signals:
 private:
     QString findExecutable(const QString &fileName, const QString &environmentVariable) const;
     QString findFirstModel(const QString &directory) const;
+    QString windowsSpeechPath() const;
+    bool speakWithWindowsSapi(const QString &text);
 
     QProcess *m_process = nullptr;
 };

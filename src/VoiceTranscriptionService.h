@@ -20,6 +20,7 @@ public:
     bool ffmpegAvailable() const;
 
     bool runProbe();
+    bool recordAndTranscribe(int seconds = 4);
     bool transcribeFile(const QString &audioPath);
 
 signals:
@@ -33,6 +34,10 @@ signals:
 
 private:
     QString findExecutable(const QString &fileName, const QString &environmentVariable, const QString &fallbackPath = QString()) const;
+    QString audioBackend() const;
+    QString preferredAudioInputName(const QString &backend) const;
+    QStringList captureArguments(const QString &backend, const QString &inputName, int seconds, const QString &outputFile) const;
+    bool startMicrophoneCapture(const QString &backend, int seconds, const QString &outputFile, bool allowAutoFallback);
     void startWhisper(const QString &label, const QStringList &arguments, const QString &expectedOutputFile = QString());
 
     QProcess *m_process = nullptr;

@@ -47,6 +47,7 @@ RobotController::RobotController(QObject *parent)
                 if (!transcriptionText.isEmpty()) {
                     setLastVoiceCommand(transcriptionText);
                     appendVoiceDiagnostics(QStringLiteral("Transcription: %1").arg(transcriptionText));
+                    simulateVoiceCommand(transcriptionText);
                 }
                 if (!stdoutText.trimmed().isEmpty()) {
                     appendVoiceDiagnostics(QStringLiteral("stdout:\n%1").arg(stdoutText.trimmed().left(1600)));
@@ -74,22 +75,30 @@ RobotController::RobotController(QObject *parent)
             appendVoiceDiagnostics(QStringLiteral("stderr:\n%1").arg(stderrText.trimmed().left(1600)));
         }
         addLog(ok ? QStringLiteral("INFO") : QStringLiteral("WARNING"),
-               ok ? QStringLiteral("[VOICE] Piper TTS generated audio") : QStringLiteral("[VOICE] Piper/TTS nao configurado ainda"));
+               ok ? QStringLiteral("[VOICE] TTS audio spoken/generated") : QStringLiteral("[VOICE] TTS nao configurado ainda"));
         updateVoiceStatusFromTools();
     });
 
     connect(&m_simulationTimer, &QTimer::timeout, this, &RobotController::updateSimulation);
     m_simulationTimer.setInterval(500);
     m_simulationTimer.start();
+    m_commandInterface.setSimulationMode(m_simulationMode);
+    refreshConnectionState();
 
     addLog("INFO", "System initialized");
-    addLog("INFO", "Simulation telemetry started");
+    addLog("INFO", "LIVE control surface initialized");
+    addLog("INFO", "Telemetry estimator started");
     addLog("INFO", "Local AI profile: Qwen3 8B via Ollama");
-    addLog("INFO", "Voice stack target: faster-whisper STT + Piper TTS");
-    addLog("WARNING", "DEMO mode active: no hardware commands will be sent");
+    addLog("INFO", "Voice stack target: faster-whisper STT + Piper/Windows SAPI TTS");
+    addLog(m_commandInterface.liveBridgeAvailable() ? "INFO" : "WARNING",
+           m_commandInterface.liveBridgeAvailable()
+               ? QStringLiteral("LIVE command outbox ready: %1").arg(m_commandInterface.liveBridgePath())
+               : QStringLiteral("LIVE command bridge missing: set CHEVEL_ROBOT_COMMAND_OUTBOX"));
     appendTerminal("chevel@rocket:~$ status");
-    appendTerminal("SIMULATION MODE / DUM-E ONLINE / SAFE MODE ACTIVE");
-    appendTerminal("AI: QWEN3 8B / STT: FASTER-WHISPER / TTS: PIPER");
+    appendTerminal(m_commandInterface.liveBridgeAvailable()
+                       ? QStringLiteral("LIVE MODE / COMMAND OUTBOX READY / SAFE MODE ACTIVE")
+                       : QStringLiteral("LIVE STANDBY / COMMAND OUTBOX MISSING / SAFE MODE ACTIVE"));
+    appendTerminal(QStringLiteral("AI: QWEN3 8B / STT: FASTER-WHISPER / TTS: ") + m_synthesisService.activeEngineName());
     runVoiceDiagnostics();
 }
 
@@ -201,12 +210,12 @@ QString RobotController::sttEngineName() const
 
 QString RobotController::ttsEngineName() const
 {
-    return QStringLiteral("PIPER TTS");
+    return m_synthesisService.activeEngineName();
 }
 
 QString RobotController::voicePipeline() const
 {
-    return QStringLiteral("MIC -> WHISPER -> QWEN3 -> PIPER");
+    return QStringLiteral("MIC -> WHISPER -> QWEN3 -> TTS");
 }
 
 QString RobotController::whisperStatus() const
@@ -221,11 +230,14 @@ QString RobotController::ffmpegStatus() const
 
 QString RobotController::piperStatus() const
 {
-    return toolStatus(m_synthesisService.piperAvailable());
+    return toolStatus(m_synthesisService.piperAvailable() || m_synthesisService.fallbackTtsAvailable());
 }
 
 QString RobotController::piperModelStatus() const
 {
+    if (!m_synthesisService.piperModelAvailable() && m_synthesisService.fallbackTtsAvailable()) {
+        return QStringLiteral("OPTIONAL");
+    }
     return toolStatus(m_synthesisService.piperModelAvailable());
 }
 
@@ -244,13 +256,19 @@ QString RobotController::ffmpegPath() const
 QString RobotController::piperPath() const
 {
     const QString path = m_synthesisService.piperPath();
+    if (path.isEmpty() && m_synthesisService.fallbackTtsAvailable()) {
+        return QStringLiteral("Windows SAPI via powershell.exe");
+    }
     return path.isEmpty() ? QStringLiteral("Configure CHEVEL_PIPER_EXE") : QDir::toNativeSeparators(path);
 }
 
 QString RobotController::piperModelPath() const
 {
     const QString path = m_synthesisService.piperModelPath();
-    return path.isEmpty() ? QStringLiteral("Configure CHEVEL_PIPER_MODEL ou coloque .onnx em C:\\AI\\models") : QDir::toNativeSeparators(path);
+    if (path.isEmpty() && m_synthesisService.fallbackTtsAvailable()) {
+        return QStringLiteral("Opcional: configure Piper .onnx; usando Windows SAPI agora");
+    }
+    return path.isEmpty() ? QStringLiteral("Configure CHEVEL_PIPER_MODEL ou coloque .onnx em CHEVEL_AI_MODELS_DIR") : QDir::toNativeSeparators(path);
 }
 
 QString RobotController::voiceOutputDir() const
@@ -293,6 +311,17 @@ QString RobotController::connectionState() const
     return m_connectionState;
 }
 
+bool RobotController::liveBridgeAvailable() const
+{
+    return m_commandInterface.liveBridgeAvailable();
+}
+
+QString RobotController::liveBridgePath() const
+{
+    const QString path = m_commandInterface.liveBridgePath();
+    return path.isEmpty() ? QStringLiteral("CHEVEL_ROBOT_COMMAND_OUTBOX nao configurado") : QDir::toNativeSeparators(path);
+}
+
 bool RobotController::emergencyActive() const
 {
     return m_emergencyActive;
@@ -324,13 +353,12 @@ bool RobotController::armRobot()
     }
 
     if (!m_commandInterface.arm()) {
-        addLog("ERROR", "ARM ROBOT failed in command interface");
-        return false;
+        return reportCommandInterfaceFailure("ARM ROBOT");
     }
 
     setArmed(true);
     setRobotState("ARMED");
-    addLog("INFO", "Robot armed");
+    addLog("INFO", m_simulationMode ? "Robot armed in simulation fallback" : "ARM ROBOT command sent to live bridge");
     return true;
 }
 
@@ -345,13 +373,12 @@ bool RobotController::disarmRobot()
     }
 
     if (!m_commandInterface.disarm()) {
-        addLog("ERROR", "DISARM ROBOT failed in command interface");
-        return false;
+        return reportCommandInterfaceFailure("DISARM ROBOT");
     }
 
     setArmed(false);
     setRobotState("IDLE");
-    addLog("INFO", "Robot disarmed");
+    addLog("INFO", m_simulationMode ? "Robot disarmed in simulation fallback" : "DISARM ROBOT command sent to live bridge");
     return true;
 }
 
@@ -361,19 +388,22 @@ bool RobotController::startMission()
         return false;
     }
     if (!m_armed) {
+        if (!m_simulationMode) {
+            addLog("ERROR", "START MISSION blocked: arm the robot before LIVE motion");
+            return false;
+        }
         setArmed(true);
-        addLog("INFO", "Robot auto-armed for simulated mission");
+        addLog("INFO", "Robot auto-armed for simulation fallback");
     }
 
     if (!m_commandInterface.startMission()) {
-        addLog("ERROR", "START MISSION failed in command interface");
-        return false;
+        return reportCommandInterfaceFailure("START MISSION");
     }
 
     setRobotState("MOVING");
     setMissionStatus("EM ANDAMENTO");
     m_missionRunning = true;
-    addLog("INFO", "Mission started");
+    addLog("INFO", m_simulationMode ? "Mission started in simulation fallback" : "START MISSION command sent to live bridge");
     return true;
 }
 
@@ -388,14 +418,13 @@ bool RobotController::pauseMission()
     }
 
     if (!m_commandInterface.pauseMission()) {
-        addLog("ERROR", "PAUSE MISSION failed in command interface");
-        return false;
+        return reportCommandInterfaceFailure("PAUSE MISSION");
     }
 
     setRobotState("PAUSED");
     setMissionStatus("PAUSADA");
     m_missionRunning = false;
-    addLog("INFO", "Mission paused");
+    addLog("INFO", m_simulationMode ? "Mission paused in simulation fallback" : "PAUSE MISSION command sent to live bridge");
     return true;
 }
 
@@ -405,19 +434,23 @@ bool RobotController::returnHome()
         return false;
     }
     if (!m_armed) {
+        if (!m_simulationMode) {
+            addLog("ERROR", "RETURN HOME blocked: arm the robot before LIVE motion");
+            return false;
+        }
         setArmed(true);
-        addLog("INFO", "Robot auto-armed for simulated return home");
+        addLog("INFO", "Robot auto-armed for simulation fallback return home");
     }
 
     if (!m_commandInterface.returnHome()) {
-        addLog("ERROR", "RETURN HOME failed in command interface");
-        return false;
+        return reportCommandInterfaceFailure("RETURN HOME");
     }
 
     setRobotState("MOVING");
     setMissionStatus("RETORNANDO PARA BASE");
     m_missionRunning = true;
-    addLog("WARNING", "Return home sequence simulated");
+    addLog(m_simulationMode ? "WARNING" : "INFO",
+           m_simulationMode ? "Return home sequence simulated" : "RETURN HOME command sent to live bridge");
     return true;
 }
 
@@ -428,11 +461,10 @@ bool RobotController::calibrateSensors()
     }
 
     if (!m_commandInterface.calibrateSensors()) {
-        addLog("ERROR", "CALIBRATE SENSORS failed in command interface");
-        return false;
+        return reportCommandInterfaceFailure("CALIBRATE SENSORS");
     }
 
-    addLog("INFO", "Sensor calibration completed in simulation");
+    addLog("INFO", m_simulationMode ? "Sensor calibration completed in simulation fallback" : "CALIBRATE SENSORS command sent to live bridge");
     return true;
 }
 
@@ -443,8 +475,7 @@ bool RobotController::rebootSystem()
     }
 
     if (!m_commandInterface.rebootSystem()) {
-        addLog("ERROR", "REBOOT SYSTEM failed in command interface");
-        return false;
+        return reportCommandInterfaceFailure("REBOOT SYSTEM");
     }
 
     setArmed(false);
@@ -454,7 +485,7 @@ bool RobotController::rebootSystem()
     setSpeed(0.0);
     setCpuLoad(18.0);
     setMemoryUsage(58.0);
-    addLog("WARNING", "Simulated system reboot completed");
+    addLog("WARNING", m_simulationMode ? "Simulated system reboot completed" : "REBOOT SYSTEM command sent to live bridge");
     return true;
 }
 
@@ -465,10 +496,7 @@ bool RobotController::emergencyStop()
         return false;
     }
 
-    if (!m_commandInterface.emergencyStop()) {
-        addLog("ERROR", "EMERGENCY STOP failed in command interface");
-        return false;
-    }
+    const bool bridgeOk = m_commandInterface.emergencyStop();
 
     setEmergencyActive(true);
     setArmed(false);
@@ -477,7 +505,11 @@ bool RobotController::emergencyStop()
     m_missionRunning = false;
     setSpeed(0.0);
     setMissionRisk(100.0);
-    addLog("CRITICAL", "Emergency stop engaged");
+    refreshConnectionState();
+    addLog("CRITICAL",
+           bridgeOk
+               ? (m_simulationMode ? QStringLiteral("Emergency stop engaged locally") : QStringLiteral("EMERGENCY STOP command sent to live bridge"))
+               : QStringLiteral("Local emergency latched; LIVE bridge missing, use physical E-stop too"));
     return true;
 }
 
@@ -488,10 +520,7 @@ bool RobotController::clearEmergency()
         return false;
     }
 
-    if (!m_commandInterface.clearEmergency()) {
-        addLog("ERROR", "CLEAR EMERGENCY failed in command interface");
-        return false;
-    }
+    const bool bridgeOk = m_commandInterface.clearEmergency();
 
     setEmergencyActive(false);
     setRobotState("IDLE");
@@ -499,14 +528,18 @@ bool RobotController::clearEmergency()
     setMissionStatus("READY");
     m_missionRunning = false;
     setMissionRisk(18.0);
-    addLog("WARNING", "Emergency cleared; robot remains disarmed");
+    refreshConnectionState();
+    addLog("WARNING",
+           bridgeOk
+               ? QStringLiteral("Emergency cleared; robot remains disarmed")
+               : QStringLiteral("Local emergency cleared; LIVE bridge missing, verify physical robot manually"));
     return true;
 }
 
 bool RobotController::confirmAction()
 {
     addLog("INFO", "Pending cockpit action confirmed");
-    appendTerminal("CONFIRM: operator accepted the simulated action");
+    appendTerminal("CONFIRM: operator accepted the pending cockpit action");
     return true;
 }
 
@@ -525,14 +558,17 @@ bool RobotController::setSimulationMode(bool enabled)
     }
 
     if (m_simulationMode == enabled) {
-        addLog("INFO", enabled ? "Simulation mode is already active" : "LIVE mode is already selected");
+        addLog("INFO", enabled ? "Simulation fallback is already active" : "LIVE mode is already selected");
         return true;
     }
 
     m_simulationMode = enabled;
-    m_commandInterface.setSimulationMode(true);
-    setConnectionState(enabled ? "SIMULATED" : "LIVE");
-    addLog(enabled ? "INFO" : "WARNING", enabled ? "Simulation mode enabled" : "LIVE mode armed for future hardware adapter");
+    m_commandInterface.setSimulationMode(enabled);
+    refreshConnectionState();
+    addLog(enabled ? "WARNING" : "INFO",
+           enabled
+               ? QStringLiteral("Simulation fallback enabled; LIVE commands are paused")
+               : QStringLiteral("LIVE mode selected; commands require CHEVEL_ROBOT_COMMAND_OUTBOX"));
     emit simulationModeChanged();
     return true;
 }
@@ -545,7 +581,7 @@ bool RobotController::toggleSafeMode()
     }
 
     setSafeMode(!m_safeMode);
-    addLog(m_safeMode ? "INFO" : "WARNING", m_safeMode ? "Safe mode enabled" : "Safe mode disabled in simulation");
+    addLog(m_safeMode ? "INFO" : "WARNING", m_safeMode ? "Safe mode enabled" : "Safe mode disabled");
     return true;
 }
 
@@ -558,7 +594,7 @@ bool RobotController::toggleVirtualFences()
 
     setVirtualFencesActive(!m_virtualFencesActive);
     addLog(m_virtualFencesActive ? "INFO" : "WARNING",
-           m_virtualFencesActive ? "Virtual fences enabled" : "Virtual fences disabled in simulation");
+           m_virtualFencesActive ? "Virtual fences enabled" : "Virtual fences disabled");
     return true;
 }
 
@@ -566,17 +602,12 @@ bool RobotController::testVoice()
 {
     setVoiceStatus("TESTING");
     setLastVoiceCommand("testar voz");
-    addLog("INFO", "[VOICE] Voice diagnostics started: Whisper -> Qwen3 8B -> Piper");
+    addLog("INFO", "[VOICE] Voice diagnostics started: Whisper -> Qwen3 8B -> TTS");
     runVoiceDiagnostics();
     const bool whisperStarted = testWhisper();
-    if (m_synthesisService.piperAvailable() && m_synthesisService.piperModelAvailable()) {
-        testPiper();
-    } else {
-        appendVoiceDiagnostics("Piper/TTS nao configurado ainda. Voz falada fica pendente ate configurar CHEVEL_PIPER_EXE e CHEVEL_PIPER_MODEL.");
-        addLog("WARNING", "[VOICE] Piper/TTS nao configurado ainda");
-    }
+    const bool speechStarted = testPiper();
     updateVoiceStatusFromTools();
-    return whisperStarted;
+    return whisperStarted || speechStarted;
 }
 
 bool RobotController::runVoiceDiagnostics()
@@ -588,8 +619,10 @@ bool RobotController::runVoiceDiagnostics()
     appendVoiceDiagnostics(QStringLiteral("Pipeline: %1").arg(voicePipeline()));
     appendVoiceDiagnostics(QStringLiteral("FFmpeg: %1 | %2").arg(ffmpegStatus(), ffmpegPath()));
     appendVoiceDiagnostics(QStringLiteral("Whisper: %1 | %2").arg(whisperStatus(), whisperPath()));
-    appendVoiceDiagnostics(QStringLiteral("Piper: %1 | %2").arg(piperStatus(), piperPath()));
+    appendVoiceDiagnostics(QStringLiteral("TTS engine: %1").arg(ttsEngineName()));
+    appendVoiceDiagnostics(QStringLiteral("TTS tool: %1 | %2").arg(piperStatus(), piperPath()));
     appendVoiceDiagnostics(QStringLiteral("Piper model: %1 | %2").arg(piperModelStatus(), piperModelPath()));
+    appendVoiceDiagnostics(QStringLiteral("Windows SAPI fallback: %1").arg(toolStatus(m_synthesisService.fallbackTtsAvailable())));
     appendVoiceDiagnostics(QStringLiteral("Voice output: %1").arg(voiceOutputDir()));
     appendVoiceDiagnostics(QStringLiteral("AI models dir: %1").arg(aiModelsDir()));
     updateVoiceStatusFromTools();
@@ -601,7 +634,7 @@ bool RobotController::runVoiceDiagnostics()
 bool RobotController::testWhisper()
 {
     if (!m_transcriptionService.whisperAvailable()) {
-        appendVoiceDiagnostics("Whisper executable missing. Esperado: C:\\Users\\mackson\\AppData\\Roaming\\Python\\Python311\\Scripts\\whisper.exe");
+        appendVoiceDiagnostics("Whisper executable missing. Configure CHEVEL_WHISPER_EXE or install whisper in PATH.");
         addLog("ERROR", "[VOICE] Whisper executable missing");
         updateVoiceStatusFromTools();
         return false;
@@ -612,10 +645,18 @@ bool RobotController::testWhisper()
     return m_transcriptionService.runProbe();
 }
 
+bool RobotController::testMicrophone()
+{
+    setVoiceStatus("TESTING");
+    addLog("INFO", "[VOICE] Microphone capture requested");
+    appendVoiceDiagnostics("Microphone: recording 4 seconds, then Whisper transcription.");
+    return m_transcriptionService.recordAndTranscribe(4);
+}
+
 bool RobotController::testPiper()
 {
     setVoiceStatus("TESTING");
-    addLog("INFO", "[VOICE] Piper probe requested");
+    addLog("INFO", "[VOICE] TTS probe requested");
     return m_synthesisService.speak(QStringLiteral("Chevel Rocket voice diagnostics online."));
 }
 
@@ -657,7 +698,7 @@ bool RobotController::simulateVoiceCommand(const QString &command)
 {
     const QString normalized = command.trimmed().toLower();
     if (normalized.isEmpty()) {
-        addLog("WARNING", "Voice simulation ignored: empty command");
+        addLog("WARNING", "Voice command ignored: empty command");
         return false;
     }
 
@@ -677,7 +718,7 @@ bool RobotController::simulateVoiceCommand(const QString &command)
         return returnHome();
     }
 
-    addLog("WARNING", "Voice command has no mapped simulated action");
+        addLog("WARNING", "Voice command has no mapped cockpit action");
     return true;
 }
 
@@ -697,13 +738,13 @@ bool RobotController::moveRobot(const QString &direction)
 
     if (!m_armed) {
         setArmed(true);
-        addLog("INFO", "Robot auto-armed for simulated manual movement");
+        addLog("INFO", "Robot auto-armed for local manual movement");
     }
 
     setRobotState("MOVING");
     setMissionStatus("MANUAL CONTROL");
     setSpeed(normalized == "backward" ? 0.85 : 1.15);
-    addLog("INFO", QString("Robot manual move simulated: %1").arg(normalized));
+    addLog("INFO", QString("Robot manual move requested locally: %1").arg(normalized));
     return true;
 }
 
@@ -713,7 +754,7 @@ bool RobotController::openGripper()
         return false;
     }
 
-    addLog("INFO", "Gripper opened in simulation");
+    addLog("INFO", "Gripper open requested locally");
     return true;
 }
 
@@ -723,7 +764,7 @@ bool RobotController::closeGripper()
         return false;
     }
 
-    addLog("INFO", "Gripper closed in simulation");
+    addLog("INFO", "Gripper close requested locally");
     return true;
 }
 
@@ -738,8 +779,12 @@ QString RobotController::runTerminalCommand(const QString &command)
 
     QString response;
     if (normalized == "status") {
-        response = QString("state=%1 mission=%2 safe=%3 mode=%4")
-            .arg(m_robotState, m_missionStatus, m_safeMode ? "on" : "off", simulationMode() ? "simulation" : "live");
+        response = QString("state=%1 mission=%2 safe=%3 mode=%4 bridge=%5")
+            .arg(m_robotState,
+                 m_missionStatus,
+                 m_safeMode ? "on" : "off",
+                 simulationMode() ? "simulation-fallback" : "live",
+                 liveBridgeAvailable() ? "ready" : "missing");
     } else if (normalized == "battery") {
         response = QString("battery=%1% voltage=%2V")
             .arg(QString::number(m_batteryLevel, 'f', 0), QString::number(m_telemetry.voltage(), 'f', 1));
@@ -762,7 +807,7 @@ QString RobotController::runTerminalCommand(const QString &command)
         clearEmergency();
         response = "emergency clear requested";
     } else {
-        response = QString("unknown simulated command: %1").arg(command.trimmed());
+        response = QString("unknown command: %1").arg(command.trimmed());
     }
 
     appendTerminal(response);
@@ -837,7 +882,7 @@ void RobotController::updateSimulation()
             setMissionStatus("COMPLETA");
             setRobotState("IDLE");
             m_missionRunning = false;
-            addLog("INFO", "Mission simulation completed");
+            addLog("INFO", "Mission profile completed");
         }
     }
 
@@ -902,6 +947,35 @@ bool RobotController::commandAllowed(const QString &commandName)
     }
 
     addLog("ERROR", QString("%1 blocked: emergency stop is active").arg(commandName));
+    return false;
+}
+
+void RobotController::refreshConnectionState()
+{
+    if (m_emergencyActive) {
+        setConnectionState("OFFLINE");
+    } else if (m_simulationMode) {
+        setConnectionState("SIM FALLBACK");
+    } else if (m_commandInterface.liveBridgeAvailable()) {
+        setConnectionState("LIVE READY");
+    } else {
+        setConnectionState("LIVE STANDBY");
+    }
+}
+
+bool RobotController::reportCommandInterfaceFailure(const QString &commandName)
+{
+    if (!m_simulationMode && !m_commandInterface.liveBridgeAvailable()) {
+        addLog("ERROR",
+               QString("%1 blocked: LIVE bridge missing. Set CHEVEL_ROBOT_COMMAND_OUTBOX on Linux/robot host.")
+                   .arg(commandName));
+        appendTerminal(QString("LIVE BRIDGE MISSING: %1 not sent").arg(commandName));
+        refreshConnectionState();
+        return false;
+    }
+
+    addLog("ERROR", QString("%1 failed in command interface").arg(commandName));
+    refreshConnectionState();
     return false;
 }
 
@@ -1174,7 +1248,8 @@ QString RobotController::toolStatus(bool available) const
 void RobotController::updateVoiceStatusFromTools()
 {
     const bool speechToTextReady = m_transcriptionService.whisperAvailable() && m_transcriptionService.ffmpegAvailable();
-    const bool textToSpeechReady = m_synthesisService.piperAvailable() && m_synthesisService.piperModelAvailable();
+    const bool textToSpeechReady = (m_synthesisService.piperAvailable() && m_synthesisService.piperModelAvailable())
+        || m_synthesisService.fallbackTtsAvailable();
 
     if (speechToTextReady && textToSpeechReady) {
         setVoiceStatus("ONLINE");
