@@ -90,14 +90,15 @@ RobotController::RobotController(QObject *parent)
     addLog("INFO", "Telemetry estimator started");
     addLog("INFO", "Local AI profile: Qwen3 8B via Ollama");
     addLog("INFO", "Voice stack target: faster-whisper STT + Piper/Windows SAPI TTS");
+    addLog("INFO", "LIVE USB target: WIESEL Mini / ESP32 / PCA9685");
     addLog(m_commandInterface.liveBridgeAvailable() ? "INFO" : "WARNING",
            m_commandInterface.liveBridgeAvailable()
-               ? QStringLiteral("LIVE command outbox ready: %1").arg(m_commandInterface.liveBridgePath())
-               : QStringLiteral("LIVE command bridge missing: set CHEVEL_ROBOT_COMMAND_OUTBOX"));
+               ? QStringLiteral("LIVE USB serial ready: %1").arg(m_commandInterface.liveBridgePath())
+               : QStringLiteral("LIVE USB serial missing: set CHEVEL_ROBOT_SERIAL_PORT"));
     appendTerminal("chevel@rocket:~$ status");
     appendTerminal(m_commandInterface.liveBridgeAvailable()
-                       ? QStringLiteral("LIVE MODE / COMMAND OUTBOX READY / SAFE MODE ACTIVE")
-                       : QStringLiteral("LIVE STANDBY / COMMAND OUTBOX MISSING / SAFE MODE ACTIVE"));
+                       ? QStringLiteral("LIVE READY / USB SERIAL %1 / SAFE MODE ACTIVE").arg(m_commandInterface.liveBridgePath())
+                       : QStringLiteral("LIVE STANDBY / SERIAL PORT MISSING / SAFE MODE ACTIVE"));
     appendTerminal(QStringLiteral("AI: QWEN3 8B / STT: FASTER-WHISPER / TTS: ") + m_synthesisService.activeEngineName());
     runVoiceDiagnostics();
 }
@@ -318,7 +319,28 @@ bool RobotController::liveBridgeAvailable() const
 
 QString RobotController::liveBridgePath() const
 {
-    const QString path = m_commandInterface.liveBridgePath();
+    return QDir::toNativeSeparators(m_commandInterface.liveBridgePath());
+}
+
+QString RobotController::serialPortName() const
+{
+    const QString port = m_commandInterface.serialPortName();
+    return port.isEmpty() ? QStringLiteral("CHEVEL_ROBOT_SERIAL_PORT nao configurado") : port;
+}
+
+int RobotController::serialBaudRate() const
+{
+    return m_commandInterface.serialBaudRate();
+}
+
+bool RobotController::serialConfigured() const
+{
+    return m_commandInterface.serialConfigured();
+}
+
+QString RobotController::outboxPath() const
+{
+    const QString path = m_commandInterface.outboxPath();
     return path.isEmpty() ? QStringLiteral("CHEVEL_ROBOT_COMMAND_OUTBOX nao configurado") : QDir::toNativeSeparators(path);
 }
 
@@ -358,7 +380,7 @@ bool RobotController::armRobot()
 
     setArmed(true);
     setRobotState("ARMED");
-    addLog("INFO", m_simulationMode ? "Robot armed in simulation fallback" : "ARM ROBOT command sent to live bridge");
+    addLog("INFO", m_simulationMode ? "Robot armed in simulation fallback" : "ARM ROBOT sent to USB serial");
     return true;
 }
 
@@ -378,7 +400,7 @@ bool RobotController::disarmRobot()
 
     setArmed(false);
     setRobotState("IDLE");
-    addLog("INFO", m_simulationMode ? "Robot disarmed in simulation fallback" : "DISARM ROBOT command sent to live bridge");
+    addLog("INFO", m_simulationMode ? "Robot disarmed in simulation fallback" : "DISARM ROBOT sent to USB serial");
     return true;
 }
 
@@ -403,7 +425,7 @@ bool RobotController::startMission()
     setRobotState("MOVING");
     setMissionStatus("EM ANDAMENTO");
     m_missionRunning = true;
-    addLog("INFO", m_simulationMode ? "Mission started in simulation fallback" : "START MISSION command sent to live bridge");
+    addLog("INFO", m_simulationMode ? "Mission started in simulation fallback" : "START MISSION sent to USB serial");
     return true;
 }
 
@@ -424,7 +446,7 @@ bool RobotController::pauseMission()
     setRobotState("PAUSED");
     setMissionStatus("PAUSADA");
     m_missionRunning = false;
-    addLog("INFO", m_simulationMode ? "Mission paused in simulation fallback" : "PAUSE MISSION command sent to live bridge");
+    addLog("INFO", m_simulationMode ? "Mission paused in simulation fallback" : "PAUSE MISSION sent to USB serial");
     return true;
 }
 
@@ -450,7 +472,7 @@ bool RobotController::returnHome()
     setMissionStatus("RETORNANDO PARA BASE");
     m_missionRunning = true;
     addLog(m_simulationMode ? "WARNING" : "INFO",
-           m_simulationMode ? "Return home sequence simulated" : "RETURN HOME command sent to live bridge");
+           m_simulationMode ? "Return home sequence simulated" : "RETURN HOME sent to USB serial");
     return true;
 }
 
@@ -464,7 +486,7 @@ bool RobotController::calibrateSensors()
         return reportCommandInterfaceFailure("CALIBRATE SENSORS");
     }
 
-    addLog("INFO", m_simulationMode ? "Sensor calibration completed in simulation fallback" : "CALIBRATE SENSORS command sent to live bridge");
+    addLog("INFO", m_simulationMode ? "Sensor calibration completed in simulation fallback" : "CALIBRATE SENSORS sent to USB serial");
     return true;
 }
 
@@ -472,6 +494,13 @@ bool RobotController::rebootSystem()
 {
     if (!commandAllowed("REBOOT SYSTEM")) {
         return false;
+    }
+
+    if (!m_simulationMode) {
+        addLog("WARNING", "REBOOT SYSTEM is diagnostics-only in WIESEL Mini v1; no physical reboot was sent");
+        appendTerminal("REBOOT: blocked by v1 safety policy; use manual ESP32 reset/diagnostics");
+        refreshConnectionState();
+        return true;
     }
 
     if (!m_commandInterface.rebootSystem()) {
@@ -485,7 +514,7 @@ bool RobotController::rebootSystem()
     setSpeed(0.0);
     setCpuLoad(18.0);
     setMemoryUsage(58.0);
-    addLog("WARNING", m_simulationMode ? "Simulated system reboot completed" : "REBOOT SYSTEM command sent to live bridge");
+    addLog("WARNING", m_simulationMode ? "Simulated system reboot completed" : "REBOOT SYSTEM sent to USB serial");
     return true;
 }
 
@@ -508,8 +537,8 @@ bool RobotController::emergencyStop()
     refreshConnectionState();
     addLog("CRITICAL",
            bridgeOk
-               ? (m_simulationMode ? QStringLiteral("Emergency stop engaged locally") : QStringLiteral("EMERGENCY STOP command sent to live bridge"))
-               : QStringLiteral("Local emergency latched; LIVE bridge missing, use physical E-stop too"));
+               ? (m_simulationMode ? QStringLiteral("Emergency stop engaged locally") : QStringLiteral("EMERGENCY STOP sent to USB serial"))
+               : QStringLiteral("Local emergency latched; USB serial unavailable, use physical E-stop too"));
     return true;
 }
 
@@ -532,7 +561,7 @@ bool RobotController::clearEmergency()
     addLog("WARNING",
            bridgeOk
                ? QStringLiteral("Emergency cleared; robot remains disarmed")
-               : QStringLiteral("Local emergency cleared; LIVE bridge missing, verify physical robot manually"));
+               : QStringLiteral("Local emergency cleared; USB serial unavailable, verify physical robot manually"));
     return true;
 }
 
@@ -568,7 +597,7 @@ bool RobotController::setSimulationMode(bool enabled)
     addLog(enabled ? "WARNING" : "INFO",
            enabled
                ? QStringLiteral("Simulation fallback enabled; LIVE commands are paused")
-               : QStringLiteral("LIVE mode selected; commands require CHEVEL_ROBOT_COMMAND_OUTBOX"));
+               : QStringLiteral("LIVE mode selected; commands require CHEVEL_ROBOT_SERIAL_PORT"));
     emit simulationModeChanged();
     return true;
 }
@@ -617,6 +646,10 @@ bool RobotController::runVoiceDiagnostics()
     appendVoiceDiagnostics("CHEVEL ROCKET AI / VOICE DIAGNOSTICS");
     appendVoiceDiagnostics(QStringLiteral("AI Model: %1").arg(aiModelName()));
     appendVoiceDiagnostics(QStringLiteral("Pipeline: %1").arg(voicePipeline()));
+    appendVoiceDiagnostics(QStringLiteral("LIVE USB: %1 | %2").arg(liveBridgeAvailable() ? QStringLiteral("READY") : QStringLiteral("STANDBY"),
+                                                                   liveBridgePath()));
+    appendVoiceDiagnostics(QStringLiteral("Serial baud: %1").arg(serialBaudRate()));
+    appendVoiceDiagnostics(QStringLiteral("Debug outbox: %1").arg(outboxPath()));
     appendVoiceDiagnostics(QStringLiteral("FFmpeg: %1 | %2").arg(ffmpegStatus(), ffmpegPath()));
     appendVoiceDiagnostics(QStringLiteral("Whisper: %1 | %2").arg(whisperStatus(), whisperPath()));
     appendVoiceDiagnostics(QStringLiteral("TTS engine: %1").arg(ttsEngineName()));
@@ -779,11 +812,12 @@ QString RobotController::runTerminalCommand(const QString &command)
 
     QString response;
     if (normalized == "status") {
-        response = QString("state=%1 mission=%2 safe=%3 mode=%4 bridge=%5")
+        response = QString("state=%1 mission=%2 safe=%3 mode=%4 serial=%5 bridge=%6")
             .arg(m_robotState,
                  m_missionStatus,
                  m_safeMode ? "on" : "off",
                  simulationMode() ? "simulation-fallback" : "live",
+                 serialConfigured() ? serialPortName() : QStringLiteral("missing"),
                  liveBridgeAvailable() ? "ready" : "missing");
     } else if (normalized == "battery") {
         response = QString("battery=%1% voltage=%2V")
@@ -965,16 +999,25 @@ void RobotController::refreshConnectionState()
 
 bool RobotController::reportCommandInterfaceFailure(const QString &commandName)
 {
-    if (!m_simulationMode && !m_commandInterface.liveBridgeAvailable()) {
+    if (!m_simulationMode && !m_commandInterface.serialConfigured()) {
         addLog("ERROR",
-               QString("%1 blocked: LIVE bridge missing. Set CHEVEL_ROBOT_COMMAND_OUTBOX on Linux/robot host.")
+               QString("%1 blocked: USB serial port missing. Set CHEVEL_ROBOT_SERIAL_PORT.")
                    .arg(commandName));
-        appendTerminal(QString("LIVE BRIDGE MISSING: %1 not sent").arg(commandName));
+        appendTerminal(QString("LIVE USB SERIAL MISSING: %1 not sent").arg(commandName));
         refreshConnectionState();
         return false;
     }
 
-    addLog("ERROR", QString("%1 failed in command interface").arg(commandName));
+    if (!m_simulationMode && !m_commandInterface.liveBridgeAvailable()) {
+        addLog("ERROR",
+               QString("%1 blocked: configured serial port is not available (%2).")
+                   .arg(commandName, m_commandInterface.serialPortName()));
+        appendTerminal(QString("LIVE USB SERIAL UNAVAILABLE: %1 not sent").arg(commandName));
+        refreshConnectionState();
+        return false;
+    }
+
+    addLog("ERROR", QString("%1 failed in USB serial command interface; check ESP32 firmware and wiring").arg(commandName));
     refreshConnectionState();
     return false;
 }

@@ -7,7 +7,7 @@ look and behave like a machine control panel, not like a web dashboard.
 
 This first version is LIVE-first but bridge-gated. It presents the cockpit as a
 real control surface, while physical robot commands only leave the app when the
-`CHEVEL_ROBOT_COMMAND_OUTBOX` bridge is configured.
+`CHEVEL_ROBOT_SERIAL_PORT` USB serial bridge is configured.
 
 ## Safety Rules In This Version
 
@@ -16,8 +16,8 @@ real control surface, while physical robot commands only leave the app when the
 - `ARM ROBOT`, `START MISSION`, `REBOOT SYSTEM` and `EMERGENCY STOP` are critical.
 - When emergency is active, commands are blocked except clearing emergency.
 - The UI talks to `RobotController`; it does not talk directly to hardware.
-- `RobotCommandInterface` is the live hardware boundary and currently writes
-  JSONL commands to the configured outbox bridge.
+- `RobotCommandInterface` is the live hardware boundary and sends line-based
+  USB serial commands to WIESEL Mini when configured.
 - Every action creates a timestamped log.
 
 ## Visual Direction

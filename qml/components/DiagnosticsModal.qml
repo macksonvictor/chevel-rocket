@@ -52,18 +52,18 @@ Popup {
 
         RowLayout {
             Layout.fillWidth: true
-            AppIcon { iconSource: "assets/ui/icons/single/active-voice.png"; iconSize: 42 }
+            AppIcon { iconSource: "assets/ui/icons/single/live-wave.png"; iconSize: 42 }
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 2
                 Text {
-                    text: "AI / VOICE DIAGNOSTICS"
+                    text: "AI / VOICE / LIVE DIAGNOSTICS"
                     color: "#E6EDF3"
                     font.pixelSize: 24
                     font.bold: true
                 }
                 Text {
-                    text: "Whisper, FFmpeg, TTS e saida de audio do Chevel Rocket."
+                    text: "Whisper, FFmpeg, TTS e ponte USB serial do WIESEL Mini."
                     color: "#9AA3AF"
                     font.pixelSize: 12
                 }
@@ -116,6 +116,20 @@ Popup {
                 iconSource: "assets/ui/icons/single/ai-chip.png"
                 Layout.fillWidth: true
             }
+            ToolStatusCard {
+                title: "USB Serial LIVE"
+                status: controller ? (controller.liveBridgeAvailable ? "READY" : "MISSING") : "MISSING"
+                pathText: controller ? controller.liveBridgePath : ""
+                iconSource: "assets/ui/icons/single/live-wave.png"
+                Layout.fillWidth: true
+            }
+            ToolStatusCard {
+                title: "Outbox debug"
+                status: controller && controller.outboxPath.indexOf("nao configurado") === -1 ? "READY" : "OPTIONAL"
+                pathText: controller ? controller.outboxPath : ""
+                iconSource: "assets/ui/icons/single/terminal.png"
+                Layout.fillWidth: true
+            }
         }
 
         RowLayout {
@@ -125,6 +139,8 @@ Popup {
             RocketButton { text: "TESTAR FALA"; iconSource: "assets/ui/icons/single/active-voice.png"; variant: "secondary"; Layout.preferredWidth: 150; Layout.preferredHeight: 40; onClicked: if (controller) controller.testPiper() }
             RocketButton { text: "ABRIR PASTA DE SAIDA"; iconSource: "assets/ui/icons/single/folder-logs.png"; variant: "outlined"; Layout.preferredWidth: 210; Layout.preferredHeight: 40; onClicked: if (controller) controller.openVoiceOutputFolder() }
             Item { Layout.fillWidth: true }
+            RocketButton { text: "FALLBACK"; iconSource: "assets/ui/icons/single/simulated.png"; variant: "outlined"; Layout.preferredWidth: 120; Layout.preferredHeight: 40; onClicked: if (controller) controller.setSimulationMode(true) }
+            RocketButton { text: "VOLTAR LIVE"; iconSource: "assets/ui/icons/single/live-wave.png"; variant: "outlined"; Layout.preferredWidth: 132; Layout.preferredHeight: 40; onClicked: if (controller) controller.setSimulationMode(false) }
             RocketButton { text: "RELOAD"; iconSource: "assets/ui/icons/single/terminal.png"; variant: "outlined"; Layout.preferredWidth: 112; Layout.preferredHeight: 40; onClicked: if (controller) controller.runVoiceDiagnostics() }
         }
 

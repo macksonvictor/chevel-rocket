@@ -87,7 +87,7 @@ ApplicationWindow {
             robotController.setSimulationMode(true)
             return
         }
-        root.openCritical("LIVE MODE", "LIVE mode uses the RobotCommandInterface bridge. Commands only leave the cockpit when CHEVEL_ROBOT_COMMAND_OUTBOX is configured. Type CONFIRMAR to continue.", "enableLive")
+        root.openCritical("LIVE MODE", "LIVE mode uses USB serial through RobotCommandInterface. Commands only leave the cockpit when CHEVEL_ROBOT_SERIAL_PORT is configured. Type CONFIRMAR to continue.", "enableLive")
     }
 
     function showDetails(title, body) {
@@ -211,7 +211,6 @@ ApplicationWindow {
             safeMode: robotController.safeMode
             connectionState: robotController.connectionState
             emergencyActive: robotController.emergencyActive
-            onSimulationModeRequested: root.requestSimulationMode(simulation)
             onSafeModeToggleRequested: robotController.toggleSafeMode()
             onMenuRequested: root.openTopRightMenu()
             Layout.fillWidth: true
@@ -265,7 +264,7 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 84
                         onClicked: root.openCritical("EMERGENCY STOP",
-                                                     "This latches the cockpit emergency stop and sends EMERGENCY_STOP through the live bridge when configured. Type CONFIRMAR to continue.",
+                                                     "This latches the cockpit emergency stop and sends STOP through USB serial when configured. Type CONFIRMAR to continue.",
                                                      "emergencyStop")
                     }
                 }
@@ -314,15 +313,17 @@ ApplicationWindow {
                 onOverviewRequested: root.currentTab = 0
                 onVoiceDiagnosticsRequested: root.openVoiceDiagnostics()
                 onSettingsRequested: root.showDetails("Chevel Rocket Settings",
-                                                      "Modo: " + (robotController.simulationMode ? "SIMULATION" : "LIVE") +
+                                                      "Modo operacional: " + robotController.connectionState +
                                                       "\nSafe mode: " + (robotController.safeMode ? "ATIVO" : "DESLIGADO") +
-                                                      "\nBridge live: " + (robotController.liveBridgeAvailable ? "READY" : "MISSING") +
-                                                      "\nOutbox: " + robotController.liveBridgePath +
+                                                      "\nUSB serial: " + robotController.serialPortName +
+                                                      "\nBaud: " + robotController.serialBaudRate +
+                                                      "\nBridge LIVE: " + (robotController.liveBridgeAvailable ? "READY" : "STANDBY") +
+                                                      "\nOutbox debug: " + robotController.outboxPath +
                                                       "\nWhisper: " + robotController.whisperPath +
                                                       "\nPiper: " + robotController.piperPath +
                                                       "\nModelo Piper: " + robotController.piperModelPath +
                                                       "\nSaida de voz: " + robotController.voiceOutputDir +
-                                                      "\n\nVariaveis: CHEVEL_ROBOT_COMMAND_OUTBOX, CHEVEL_WHISPER_EXE, CHEVEL_FFMPEG_EXE, CHEVEL_PIPER_EXE, CHEVEL_PIPER_MODEL, CHEVEL_MIC_DEVICE, CHEVEL_AUDIO_BACKEND, CHEVEL_VOICE_OUTPUT_DIR e CHEVEL_AI_MODELS_DIR.")
+                                                      "\n\nVariaveis: CHEVEL_ROBOT_SERIAL_PORT, CHEVEL_ROBOT_SERIAL_BAUD, CHEVEL_ROBOT_COMMAND_OUTBOX, CHEVEL_WHISPER_EXE, CHEVEL_FFMPEG_EXE, CHEVEL_PIPER_EXE, CHEVEL_PIPER_MODEL, CHEVEL_MIC_DEVICE, CHEVEL_AUDIO_BACKEND, CHEVEL_VOICE_OUTPUT_DIR e CHEVEL_AI_MODELS_DIR.")
                 onLogsRequested: root.currentTab = 5
                 onAboutRequested: root.showDetails("About Chevel Rocket",
                                                    "CHEVEL ROCKET\nMission & Robot Control\n\nPainel nativo Qt/QML LIVE-first para controle do DUM-E, com bridge seguro, logs, terminal, seguranca e diagnostico de voz/IA local.\n\nIA local: " + robotController.aiModelName + "\nPipeline: " + robotController.voicePipeline)
@@ -681,9 +682,9 @@ ApplicationWindow {
                             rowSpacing: 10
                             columnSpacing: 10
 
-                            RocketButton { text: "START MISSION"; iconText: "\u25b6"; iconSource: "assets/ui/icons/single/start.png"; variant: "secondary"; labelPixelSize: 11; locked: robotController.emergencyActive; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("START MISSION", "LIVE command will be sent through RobotCommandInterface when the bridge is configured. Type CONFIRMAR to continue.", "startMission") }
+                            RocketButton { text: "START MISSION"; iconText: "\u25b6"; iconSource: "assets/ui/icons/single/start.png"; variant: "secondary"; labelPixelSize: 11; locked: robotController.emergencyActive; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("START MISSION", "LIVE USB command will be sent to the WIESEL Mini when CHEVEL_ROBOT_SERIAL_PORT is configured. Type CONFIRMAR to continue.", "startMission") }
                             RocketButton { text: "PAUSE MISSION"; iconText: "||"; iconSource: "assets/ui/icons/single/pause.png"; variant: "secondary"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: robotController.pauseMission() }
-                            RocketButton { text: "RETURN HOME"; iconText: "\u2302"; iconSource: "assets/ui/icons/single/home.png"; variant: "secondary"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("RETURN HOME", "Return Home is a LIVE motion command through the command bridge. Type CONFIRMAR to continue.", "returnHome") }
+                            RocketButton { text: "RETURN HOME"; iconText: "\u2302"; iconSource: "assets/ui/icons/single/home.png"; variant: "secondary"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("RETURN HOME", "Return Home is a LIVE USB motion command to the WIESEL Mini. Type CONFIRMAR to continue.", "returnHome") }
                             RocketButton { text: "CONFIRM"; iconText: "\u2713"; iconSource: "assets/ui/icons/single/confirm.png"; variant: "confirm"; labelPixelSize: 11; Layout.fillWidth: true; Layout.preferredHeight: 50; onClicked: root.openCritical("MISSION CONFIRM", "Confirm the queued mission step. Type CONFIRMAR to continue.", "confirmAction") }
                         }
 
@@ -959,10 +960,10 @@ ApplicationWindow {
                         columns: 2
                         columnSpacing: 10
                         rowSpacing: 10
-                        RocketButton { text: "ARM ROBOT"; iconText: "\u2699"; variant: "primary"; Layout.fillWidth: true; Layout.preferredHeight: 46; locked: robotController.emergencyActive || robotController.armed; onClicked: root.openCritical("ARM ROBOT", "Arm Dum-E through RobotCommandInterface when the live bridge is configured. Type CONFIRMAR to continue.", "armRobot") }
+                        RocketButton { text: "ARM ROBOT"; iconText: "\u2699"; variant: "primary"; Layout.fillWidth: true; Layout.preferredHeight: 46; locked: robotController.emergencyActive || robotController.armed; onClicked: root.openCritical("ARM ROBOT", "Arm Dum-E through USB serial when CHEVEL_ROBOT_SERIAL_PORT is configured. Type CONFIRMAR to continue.", "armRobot") }
                         RocketButton { text: "DISARM ROBOT"; iconText: "\u2699"; variant: "disabled"; Layout.fillWidth: true; Layout.preferredHeight: 46; locked: !robotController.armed; onClicked: robotController.disarmRobot() }
                         RocketButton { text: "CALIBRATE SENSORS"; iconText: "\u25ce"; variant: "outlined"; Layout.fillWidth: true; Layout.preferredHeight: 46; onClicked: robotController.calibrateSensors() }
-                        RocketButton { text: "REBOOT SYSTEM"; iconText: "\u21bb"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 46; onClicked: root.openCritical("REBOOT SYSTEM", "This queues a controller reboot through the live bridge when configured. Type CONFIRMAR to continue.", "rebootSystem") }
+                        RocketButton { text: "REBOOT SYSTEM"; iconText: "\u21bb"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 46; onClicked: root.openCritical("REBOOT SYSTEM", "WIESEL Mini v1 does not send physical reboot. This opens a safe diagnostic action. Type CONFIRMAR to continue.", "rebootSystem") }
                         RocketButton { text: "MOVER FRENTE"; iconText: "\u2191"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; locked: robotController.emergencyActive; onClicked: robotController.moveRobot("forward") }
                         RocketButton { text: "MOVER TRAS"; iconText: "\u2193"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; locked: robotController.emergencyActive; onClicked: robotController.moveRobot("backward") }
                         RocketButton { text: "ESQUERDA"; iconText: "\u2190"; variant: "secondary"; Layout.fillWidth: true; Layout.preferredHeight: 42; locked: robotController.emergencyActive; onClicked: robotController.moveRobot("left") }
@@ -999,7 +1000,7 @@ ApplicationWindow {
                     spacing: 22
                     RocketMetricRow { label: "Modelo de IA Local"; value: robotController.aiModelName; valueColor: root.cyan; Layout.fillWidth: true }
                     RocketMetricRow { label: "Segurança"; value: "ATIVA"; valueColor: root.green; Layout.fillWidth: true }
-                    RocketButton { text: "REINICIAR IA"; iconText: "\u21bb"; variant: "outlined"; labelPixelSize: 11; Layout.preferredWidth: 132; Layout.preferredHeight: 34; onClicked: root.openCritical("REBOOT SYSTEM", "Restart the local AI/control service through the live bridge when configured. Type CONFIRMAR to continue.", "rebootSystem") }
+                    RocketButton { text: "REINICIAR IA"; iconText: "\u21bb"; variant: "outlined"; labelPixelSize: 11; Layout.preferredWidth: 132; Layout.preferredHeight: 34; onClicked: root.openCritical("REBOOT SYSTEM", "WIESEL Mini v1 does not reboot hardware from the cockpit. This logs a safe diagnostic action. Type CONFIRMAR to continue.", "rebootSystem") }
                 }
             }
         }
@@ -1079,7 +1080,7 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 Text { text: "Comando recebido:\n" + (root.terminalCommand.length > 0 ? root.terminalCommand : "status"); color: "#D0D7DE"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
                 MiniLine {}
-                Text { text: "Interpretação (" + robotController.aiModelName + "):\nComando preparado no cockpit LIVE-first. Envio físico só acontece quando a ponte RobotCommandInterface estiver configurada."; color: "#D0D7DE"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
+                Text { text: "Interpretação (" + robotController.aiModelName + "):\nComando preparado no cockpit LIVE-first. Envio fisico so acontece quando CHEVEL_ROBOT_SERIAL_PORT estiver configurado."; color: "#D0D7DE"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.WordWrap }
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 42
@@ -1239,7 +1240,7 @@ ApplicationWindow {
                     Image { source: "assets/ui/safety/emergency-stop-large.png"; Layout.fillWidth: true; Layout.fillHeight: true; fillMode: Image.PreserveAspectFit; smooth: true }
                     Text { text: "PRESS TO STOP ALL SYSTEMS"; color: root.red; font.pixelSize: 17; font.bold: true; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true }
                     Text { text: "Immediately halts all robot motion, actuators, and mission processes."; color: root.muted; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter; Layout.fillWidth: true }
-                    RocketButton { text: "CRITICAL ACTION"; iconText: "!"; variant: "emergency"; Layout.fillWidth: true; Layout.preferredHeight: 58; onClicked: root.openCritical("EMERGENCY STOP", "This latches emergency locally and sends EMERGENCY_STOP through the live bridge when configured. Type CONFIRMAR to continue.", "emergencyStop") }
+                    RocketButton { text: "CRITICAL ACTION"; iconText: "!"; variant: "emergency"; Layout.fillWidth: true; Layout.preferredHeight: 58; onClicked: root.openCritical("EMERGENCY STOP", "This latches emergency locally and sends STOP through USB serial when configured. Type CONFIRMAR to continue.", "emergencyStop") }
                     RocketButton { text: "RESET EMERGENCY"; iconText: "\u21bb"; variant: "warning"; Layout.fillWidth: true; Layout.preferredHeight: 44; locked: !robotController.emergencyActive; onClicked: robotController.clearEmergency() }
                 }
 

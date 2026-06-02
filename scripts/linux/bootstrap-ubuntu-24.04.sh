@@ -36,7 +36,9 @@ Recommended environment for LIVE-first local testing:
   export CHEVEL_AUDIO_BACKEND=auto
   export CHEVEL_VOICE_OUTPUT_DIR="$HOME/.local/share/chevel-rocket/voice-output"
   export CHEVEL_AI_MODELS_DIR="$HOME/.local/share/chevel-rocket/models"
-  export CHEVEL_ROBOT_COMMAND_OUTBOX="$HOME/.local/share/chevel-rocket/live-command-outbox.jsonl"
+  export CHEVEL_ROBOT_SERIAL_PORT="/dev/ttyUSB0"
+  export CHEVEL_ROBOT_SERIAL_BAUD=115200
+  export CHEVEL_ROBOT_COMMAND_OUTBOX="$HOME/.local/share/chevel-rocket/live-command-outbox.jsonl" # optional debug fallback
 
 Piper needs a .onnx voice model:
   export CHEVEL_PIPER_MODEL="$HOME/.local/share/chevel-rocket/models/<voice>.onnx"

@@ -19,6 +19,12 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver(0x40);
 
 const int SERVO_MIN = 110;
 const int SERVO_MAX = 510;
+const int EMERGENCY_PIN = 33;
+const int LED_ONLINE = 25;
+const int LED_WARNING = 26;
+const int LED_EMERGENCY = 27;
+
+bool emergencyLatched = false;
 
 struct ServoLimit {
   int channel;
@@ -37,12 +43,27 @@ int angleToPulse(int angle) {
 }
 
 void setServo(ServoLimit &servo, int angle) {
+  if (emergencyLatched) {
+    Serial.println("ERR EMERGENCY");
+    return;
+  }
   angle = constrain(angle, servo.minAngle, servo.maxAngle);
   servo.currentAngle = angle;
   pwm.setPWM(servo.channel, 0, angleToPulse(angle));
 }
 
+void updateLeds() {
+  digitalWrite(LED_ONLINE, emergencyLatched ? LOW : HIGH);
+  digitalWrite(LED_WARNING, LOW);
+  digitalWrite(LED_EMERGENCY, emergencyLatched ? HIGH : LOW);
+}
+
 void homePosition() {
+  if (emergencyLatched) {
+    Serial.println("ERR EMERGENCY");
+    updateLeds();
+    return;
+  }
   setServo(baseServo, 90);
   setServo(shoulderServo, 90);
   setServo(elbowServo, 90);
@@ -51,7 +72,7 @@ void homePosition() {
 }
 
 void printStatus() {
-  Serial.print("STATE READY ");
+  Serial.print(emergencyLatched ? "STATE EMERGENCY " : "STATE READY ");
   Serial.print("BASE ");
   Serial.print(baseServo.currentAngle);
   Serial.print(" SHOULDER ");
@@ -66,12 +87,25 @@ void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22);
 
+  pinMode(EMERGENCY_PIN, INPUT_PULLUP);
+  pinMode(LED_ONLINE, OUTPUT);
+  pinMode(LED_WARNING, OUTPUT);
+  pinMode(LED_EMERGENCY, OUTPUT);
+
   pwm.begin();
   pwm.setPWMFreq(50);
 
   delay(500);
   homePosition();
+  updateLeds();
   Serial.println("WIESEL MINI READY");
+}
+
+void latchEmergency(const char *source) {
+  emergencyLatched = true;
+  updateLeds();
+  Serial.print("OK STOP ");
+  Serial.println(source);
 }
 
 void handleSetCommand(String target, int angle) {
@@ -95,6 +129,10 @@ void handleSetCommand(String target, int angle) {
 }
 
 void loop() {
+  if (digitalRead(EMERGENCY_PIN) == LOW && !emergencyLatched) {
+    latchEmergency("GPIO33");
+  }
+
   if (!Serial.available()) {
     return;
   }
@@ -118,11 +156,12 @@ void loop() {
 
   if (line == "HOME") {
     homePosition();
+    updateLeds();
     return;
   }
 
   if (line == "STOP") {
-    Serial.println("OK STOP");
+    latchEmergency("SERIAL");
     return;
   }
 

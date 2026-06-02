@@ -103,6 +103,7 @@ set(ASSET_FILES
     assets/ui/branding/chevel-rocket-full.png
     assets/ui/branding/chevel-rocket-header.png
     assets/ui/branding/chevel-rocket-logo.png
+    assets/ui/branding/chevel-rocket-topbar.png
     assets/ui/branding/chevel-rocket-wordmark.png
     assets/ui/feeds/camera-feed.png
     assets/ui/icons/actions.png
@@ -121,6 +122,7 @@ set_source_files_properties(assets/ui/branding/chevel-rocket-emblem.png PROPERTI
 set_source_files_properties(assets/ui/branding/chevel-rocket-full.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-full.png)
 set_source_files_properties(assets/ui/branding/chevel-rocket-header.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-header.png)
 set_source_files_properties(assets/ui/branding/chevel-rocket-logo.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-logo.png)
+set_source_files_properties(assets/ui/branding/chevel-rocket-topbar.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-topbar.png)
 set_source_files_properties(assets/ui/branding/chevel-rocket-wordmark.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/branding/chevel-rocket-wordmark.png)
 set_source_files_properties(assets/ui/feeds/camera-feed.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/feeds/camera-feed.png)
 set_source_files_properties(assets/ui/icons/actions.png PROPERTIES QT_RESOURCE_ALIAS assets/ui/icons/actions.png)

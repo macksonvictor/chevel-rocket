@@ -53,6 +53,10 @@ class RobotController : public QObject
     Q_PROPERTY(QString connectionState READ connectionState NOTIFY connectionStateChanged)
     Q_PROPERTY(bool liveBridgeAvailable READ liveBridgeAvailable NOTIFY connectionStateChanged)
     Q_PROPERTY(QString liveBridgePath READ liveBridgePath NOTIFY connectionStateChanged)
+    Q_PROPERTY(QString serialPortName READ serialPortName NOTIFY connectionStateChanged)
+    Q_PROPERTY(int serialBaudRate READ serialBaudRate NOTIFY connectionStateChanged)
+    Q_PROPERTY(bool serialConfigured READ serialConfigured NOTIFY connectionStateChanged)
+    Q_PROPERTY(QString outboxPath READ outboxPath NOTIFY connectionStateChanged)
     Q_PROPERTY(bool emergencyActive READ emergencyActive NOTIFY emergencyActiveChanged)
     Q_PROPERTY(bool armed READ armed NOTIFY armedChanged)
     Q_PROPERTY(QStringList logs READ logs NOTIFY logsChanged)
@@ -101,6 +105,10 @@ public:
     QString connectionState() const;
     bool liveBridgeAvailable() const;
     QString liveBridgePath() const;
+    QString serialPortName() const;
+    int serialBaudRate() const;
+    bool serialConfigured() const;
+    QString outboxPath() const;
     bool emergencyActive() const;
     bool armed() const;
     QStringList logs() const;
