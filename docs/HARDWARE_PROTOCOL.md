@@ -39,6 +39,9 @@ STOP
 ## Suggested Responses
 
 ```text
+OK PONG
+OK HOME
+OK STOP SERIAL
 OK
 ERR UNKNOWN_COMMAND
 ERR LIMIT
@@ -50,6 +53,9 @@ SERVO BASE 90
 ## Safety Rules
 
 The firmware should apply limits before moving any servo.
+
+`STOP` latches emergency locally on the ESP32. Movement commands must return
+`ERR EMERGENCY` until the operator physically verifies and resets the prototype.
 
 Example limits:
 

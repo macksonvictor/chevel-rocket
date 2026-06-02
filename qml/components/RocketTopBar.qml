@@ -11,7 +11,6 @@ Rectangle {
     property bool emergencyActive: false
     property string connectionState: "LIVE STANDBY"
 
-    signal simulationModeRequested(bool simulation)
     signal safeModeToggleRequested()
     signal menuRequested()
 
@@ -25,51 +24,52 @@ Rectangle {
         spacing: 16
 
         Item {
-            Layout.preferredWidth: 430
-            Layout.maximumWidth: 430
+            Layout.preferredWidth: 444
+            Layout.maximumWidth: 444
             Layout.fillHeight: true
 
             Image {
+                id: logoImage
                 anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.top: parent.top
                 anchors.leftMargin: 0
+                anchors.topMargin: 2
                 width: 430
-                height: 110
-                source: "qrc:/qt/qml/Chevel/Rocket/assets/ui/branding/chevel-rocket-full.png"
+                height: 82
+                source: "qrc:/qt/qml/Chevel/Rocket/assets/ui/branding/chevel-rocket-topbar.png"
                 fillMode: Image.PreserveAspectFit
+                horizontalAlignment: Image.AlignLeft
+                verticalAlignment: Image.AlignVCenter
                 smooth: true
                 mipmap: true
             }
+
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: 72
+                anchors.top: logoImage.bottom
+                anchors.topMargin: -2
+                text: "Mission & Robot Control"
+                color: "#B8C5D8"
+                font.pixelSize: 15
+                font.weight: Font.Medium
+            }
         }
 
-        Item { Layout.preferredWidth: 14 }
+        Item { Layout.preferredWidth: 32 }
 
         RocketStatusPill {
             valueText: root.connectionState
             status: root.emergencyActive ? "OFFLINE" : root.connectionState
-            iconText: "\u25ad"
-            iconSource: root.simulationMode ? "assets/ui/icons/single/simulated.png" : "assets/ui/icons/single/live.png"
-            Layout.preferredWidth: 200
-            Layout.minimumWidth: 200
-            Layout.maximumWidth: 200
+            iconText: ""
+            iconSource: "assets/ui/icons/single/live-wave.png"
+            Layout.preferredWidth: 222
+            Layout.minimumWidth: 222
+            Layout.maximumWidth: 222
             Layout.preferredHeight: 46
         }
 
-        RocketSegmentedToggle {
-            segments: ["SIMULATION", "LIVE"]
-            iconSources: ["assets/ui/icons/single/simulation.png", "assets/ui/icons/single/live.png"]
-            selectedIndex: root.simulationMode ? 0 : 1
-            interactive: true
-            onSelected: function(index) {
-                root.simulationModeRequested(index === 0)
-            }
-            Layout.preferredWidth: 324
-            Layout.minimumWidth: 324
-            Layout.maximumWidth: 324
-            Layout.preferredHeight: 46
-        }
-
-        Item { Layout.preferredWidth: 20 }
+        Item { Layout.preferredWidth: 34 }
 
         RocketStatusPill {
             valueText: root.safeMode ? "SAFE MODE" : "MANUAL MODE"

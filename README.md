@@ -35,7 +35,7 @@ Chevel Rocket is the native robotics control center of the Chevel ecosystem.
 
 Chevel AI is the intelligence layer: reasoning, memory, language, planning and tool use. Chevel Rocket is the robotics layer: cockpit interface, telemetry, supervision, safety states and future hardware integration.
 
-The cockpit is **LIVE-first**: commands are routed through `RobotCommandInterface` and only leave the app when a live command bridge is configured. Without that bridge, the UI stays in `LIVE STANDBY` and fails safely instead of pretending a real robot moved.
+The cockpit is **LIVE-first**: commands are routed through `RobotCommandInterface` and leave the app through USB serial only when `CHEVEL_ROBOT_SERIAL_PORT` is configured. Without that port, the UI stays in `LIVE STANDBY` and fails safely instead of pretending a real robot moved.
 
 The first physical target is **WIESEL Mini**, a low-cost prototype used to validate movement, telemetry, emergency states and the hardware bridge before larger robotic platforms.
 
@@ -274,6 +274,9 @@ C:\Qt\6.11.1\msvc2022_64\bin\windeployqt.exe --debug --qmldir qml build\ChevelRo
 Run:
 
 ```powershell
+$env:CHEVEL_ROBOT_SERIAL_PORT="COM3"
+$env:CHEVEL_ROBOT_SERIAL_BAUD="115200"
+# Optional debug fallback when serial fails or is absent:
 $env:CHEVEL_ROBOT_COMMAND_OUTBOX="C:\END0-SYM\chevel\chevel-rocket\build\live-command-outbox.jsonl"
 .\build\ChevelRobotControlCenter.exe
 ```
@@ -318,7 +321,9 @@ scripts/linux/build.sh
 Run:
 
 ```bash
-export CHEVEL_ROBOT_COMMAND_OUTBOX="$HOME/.local/share/chevel-rocket/live-command-outbox.jsonl"
+export CHEVEL_ROBOT_SERIAL_PORT="/dev/ttyUSB0"
+export CHEVEL_ROBOT_SERIAL_BAUD=115200
+export CHEVEL_ROBOT_COMMAND_OUTBOX="$HOME/.local/share/chevel-rocket/live-command-outbox.jsonl" # optional debug fallback
 export CHEVEL_AUDIO_BACKEND=auto
 export CHEVEL_PIPER_MODEL="$HOME/.local/share/chevel-rocket/models/<voice>.onnx"
 scripts/linux/run.sh
@@ -330,11 +335,13 @@ Test minimal Qt/QML window:
 scripts/linux/run.sh --test-window
 ```
 
-`CHEVEL_ROBOT_COMMAND_OUTBOX` is the first LIVE bridge contract. When set, live commands are appended as JSON lines for a future robot-side adapter to consume. If it is not set, the cockpit shows `LIVE STANDBY` and motion commands fail safely.
+`CHEVEL_ROBOT_SERIAL_PORT` is the first LIVE bridge contract. When set, the app sends supervised USB serial commands to the ESP32 WIESEL Mini firmware. If it is not set, the cockpit shows `LIVE STANDBY` and motion commands fail safely. `CHEVEL_ROBOT_COMMAND_OUTBOX` remains an optional JSONL debug fallback.
 
 Useful environment variables:
 
-- `CHEVEL_ROBOT_COMMAND_OUTBOX`: live command JSONL outbox.
+- `CHEVEL_ROBOT_SERIAL_PORT`: USB serial device, for example `COM3` or `/dev/ttyUSB0`.
+- `CHEVEL_ROBOT_SERIAL_BAUD`: serial speed, default `115200`.
+- `CHEVEL_ROBOT_COMMAND_OUTBOX`: optional live/debug JSONL outbox fallback.
 - `CHEVEL_AUDIO_BACKEND=auto|pulse|alsa|dshow`: microphone backend.
 - `CHEVEL_MIC_DEVICE`: optional explicit microphone device.
 - `CHEVEL_FFMPEG_EXE`, `CHEVEL_WHISPER_EXE`, `CHEVEL_PIPER_EXE`: tool paths.
@@ -363,7 +370,7 @@ Useful environment variables:
 - `CMakeLists.txt`: Qt executable and QML module packaging.
 - `src/RobotController.*`: state, logs and live telemetry estimator.
 - `src/TelemetryModel.*`: telemetry properties exposed to QML.
-- `src/RobotCommandInterface.*`: LIVE command boundary, prepared for robot integration.
+- `src/RobotCommandInterface.*`: LIVE USB serial boundary for WIESEL Mini plus debug outbox fallback.
 - `src/VoiceTranscriptionService.*`: FFmpeg + Whisper microphone/audio transcription.
 - `src/VoiceSynthesisService.*`: Piper TTS and Windows SAPI fallback.
 - `qml/Main.qml`: CHEVEL ROCKET core cockpit screen.

@@ -12,11 +12,11 @@ The command interface should:
 - validate allowed operations
 - update logs
 - update robot state
-- keep simulation and hardware behavior separated
+- keep fallback/test behavior separated from live USB behavior
 
 ## Future responsibility
 
-When hardware mode is added, the command interface should also:
+The WIESEL Mini v1 hardware mode should:
 
 - validate robot connection
 - check safety state
@@ -44,7 +44,7 @@ SET GRIPPER <angle>
 QML button
   -> RobotController
   -> RobotCommandInterface
-  -> simulation update or hardware bridge
+  -> USB serial bridge or hidden fallback
   -> log event
   -> UI state update
 ```

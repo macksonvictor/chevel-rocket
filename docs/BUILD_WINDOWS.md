@@ -53,8 +53,13 @@ C:\Qt\6.11.1\msvc2022_64\bin\windeployqt.exe --debug --qmldir qml build\ChevelRo
 ## Run
 
 ```cmd
+set CHEVEL_ROBOT_SERIAL_PORT=COM3
+set CHEVEL_ROBOT_SERIAL_BAUD=115200
 .\build\ChevelRobotControlCenter.exe
 ```
+
+If the ESP32 is not connected yet, leave `CHEVEL_ROBOT_SERIAL_PORT` unset. The
+app will stay in `LIVE STANDBY` and physical motion commands will fail safely.
 
 ## Test Minimal Window
 
